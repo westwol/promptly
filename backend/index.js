@@ -1,39 +1,44 @@
 "use strict";
 
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import FastifyWebSocket from "@fastify/websocket";
+import OpenAI from "openai";
+import dotenv from "dotenv";
+dotenv.config();
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 const fastify = Fastify({
   logger: true,
 });
 
-fastify.route({
-  method: "GET",
-  url: "/",
-  schema: {
-    querystring: {
-      type: "object",
-      properties: {
-        name: { type: "string" },
-      },
-      required: ["name"],
-    },
-    response: {
-      200: {
-        type: "object",
-        properties: {
-          hello: { type: "string" },
-        },
-      },
-    },
-  },
-  // this function is executed for every request before the handler is executed
-  preHandler: async (request, reply) => {
-    // E.g. check authentication
-  },
-  handler: async (request, reply) => {
-    return { hello: "world" };
-  },
+await fastify.register(cors, { origin: true });
+
+fastify.post("/chat", async (request, reply) => {
+  const { body: userMessage, model } = request.body;
+
+  if (!userMessage || !model) {
+    return reply
+      .status(400)
+      .send({ error: "Both body and model are required" });
+  }
+
+  try {
+    // note the new method chain
+    const completion = await openai.chat.completions.create({
+      model: "",
+      messages: [{ role: "user", content: userMessage }],
+    });
+
+    const assistantMessage = completion.choices?.[0]?.message?.content;
+    return reply.send({ reply: assistantMessage });
+  } catch (err) {
+    request.log.error(err);
+    return reply.status(500).send({ error: "OpenAI API error" });
+  }
 });
 
 try {
