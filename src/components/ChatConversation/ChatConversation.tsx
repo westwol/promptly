@@ -1,12 +1,14 @@
 "use client";
 
-import { useQuery } from "convex/react";
 import { useEffect } from "react";
+import { Preloaded } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 
-export const ChatConversation = () => {
-  const tasks = useQuery(api.conversations.get);
+interface ChatConversationProps {
+  conversation: Preloaded<typeof api.conversations.getById>;
+}
 
+export const ChatConversation = ({ conversation }: ChatConversationProps) => {
   useEffect(() => {
     const websocket = new WebSocket("http://localhost:4000/conversation");
 
@@ -27,7 +29,9 @@ export const ChatConversation = () => {
 
   return (
     <div className="grid grid-rows-[1fr_100px] h-screen overflow-auto">
-      <div>convo here</div>
+      <div className="text-white whitespace-pre">
+        {JSON.stringify(conversation, null, 2)}
+      </div>
       <div className="relative">
         <textarea
           className="bg-primary w-full h-full text-white outline-0"
