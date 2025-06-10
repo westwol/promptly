@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "convex/react";
+
 import { api } from "../../../../../../convex/_generated/api";
 
 export const ChatList = () => {
@@ -13,12 +15,13 @@ export const ChatList = () => {
       </div>
       <ul className="flex flex-col gap-2 text-white">
         {conversations?.map((conversation) => (
-          <li
+          <Link
             key={conversation._id}
             className="p-2 hover:bg-red-950 rounded-sm text-sm"
+            href={`/conversations/${conversation._id}`}
           >
             {conversation.title}
-          </li>
+          </Link>
         ))}
       </ul>
     </div>
