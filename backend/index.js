@@ -1,16 +1,16 @@
-// index.js
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import websocketPlugin from "@fastify/websocket";
+import { v4 as uuid } from "uuid";
 import OpenAI from "openai";
 import Redis from "ioredis";
-import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
+import { ConvexHttpClient } from "convex/browser";
 dotenv.config();
 
 const fastify = Fastify({ logger: true });
 await fastify.register(cors, { origin: true });
-await fastify.register(websocketPlugin);
+
+const client = new ConvexHttpClient(process.env.CONVEX_URL);
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const redis = new Redis({
@@ -18,180 +18,120 @@ const redis = new Redis({
   host: process.env.REDIS_HOST,
   port: +process.env.REDIS_PORT,
 });
-const redisSub = new Redis({
-  // **subscriber** for Pub/Sub
-  host: process.env.REDIS_HOST,
-  port: +process.env.REDIS_PORT,
-});
 
-const SESSION_TTL = 60 * 60; // seconds
+async function startOpenAIJob(streamId, conversationId, messages) {
+  // 1) mark init
+  await redis.lpush(`chat:${streamId}`, JSON.stringify({ type: "INIT" }));
 
-// ──────────────────────────────────────────────────────────────────────────────
-// PUB/SUB: fan-out each token (and the final "done") to all subscribed sockets
-// ──────────────────────────────────────────────────────────────────────────────
-const channelSubscribers = new Map();
-// channelSubscribers: Map<string /* chan */, Set<WebSocket>>
+  // Create initial message in Convex without waiting
+  const messagePromise = client.mutation(
+    "conversations:addNewMessageToConversation",
+    {
+      conversationId: messages[0].conversationId,
+      content: "",
+    }
+  );
 
-redisSub.on("message", (chan, raw) => {
-  const subs = channelSubscribers.get(chan);
-  if (!subs) return;
-  // broadcast to every live socket
-  for (const socket of subs) {
-    socket.send(raw);
-  }
-  // if it's a done message, you can optionally tear down the channel
-  const msg = JSON.parse(raw);
-  if (msg.type === "done") {
-    channelSubscribers.delete(chan);
-    redisSub.unsubscribe(chan);
-  }
-});
-
-async function streamAndPublish(sessionId, model, content) {
-  const bufKey = `sess:${sessionId}:buf`;
-  const metaKey = `sess:${sessionId}:meta`;
-  const chan = `sess:${sessionId}:chan`;
+  // 2) kick off the V4 streaming call
+  const completion = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages,
+    stream: true,
+  });
 
   let idx = 0;
-  try {
-    const stream = await openai.chat.completions.create({
-      model,
-      messages: [{ role: "user", content }],
-      stream: true,
-    });
+  let fullContent = "";
+  // 3) loop over each chunk as it arrives
+  for await (const chunk of completion) {
+    const text = chunk.choices?.[0]?.delta?.content;
+    if (!text) continue;
 
-    for await (const part of stream) {
-      const token = part.choices?.[0]?.delta?.content;
-      if (!token) continue;
-      // 1) append to list
-      await redis.rpush(bufKey, token);
-      // 2) publish to channel
-      const payload = JSON.stringify({ type: "token", token, index: idx });
-      await redis.publish(chan, payload);
-      idx++;
-    }
+    fullContent += text;
+    // persist + publish
+    const event = { id: idx++, text };
+    await redis.lpush(`chat:${streamId}`, JSON.stringify(event));
+    await redis.publish(`chat:pub:${streamId}`, JSON.stringify(event));
 
-    // mark done
-    await redis.hset(metaKey, "isDone", "true");
-    await redis.publish(chan, JSON.stringify({ type: "done" }));
-  } catch (err) {
-    // if something goes wrong, broadcast an error
-    const e = JSON.stringify({ type: "error", message: err.message });
-    await redis.publish(chan, e);
+    // Update message in Convex without waiting
+    messagePromise
+      .then(async (messageId) => {
+        await client.mutation("conversations:updateStreamingMessage", {
+          messageId,
+          content: fullContent,
+          token: text,
+          tokenIndex: idx - 1,
+        });
+      })
+      .catch(console.error);
   }
+
+  // 4) mark done in Redis
+  await redis.lpush(`chat:${streamId}`, JSON.stringify({ type: "DONE" }));
+
+  // Mark message as complete in Convex
+  messagePromise
+    .then(async (messageId) => {
+      await client.mutation("conversations:completeMessage", {
+        messageId,
+        content: fullContent,
+      });
+    })
+    .catch(console.error);
 }
 
-fastify.get("/conversation", { websocket: true }, (socket) => {
-  let sessionId = null;
+fastify.post("/api/chat/start", async (request, reply) => {
+  const { messages, conversationId } = request.body;
+  const streamId = uuid();
+  startOpenAIJob(streamId, conversationId, messages).catch((err) =>
+    console.error(err)
+  );
+  return reply.send({ streamId });
+});
 
-  socket.on("message", async (raw) => {
-    let msg;
-    try {
-      msg = JSON.parse(raw);
-    } catch {
-      return socket.send(
-        JSON.stringify({ type: "error", message: "Invalid JSON" }),
-      );
-    }
+fastify.get("/api/chat/stream", async (request, reply) => {
+  const streamId = request.query.streamId;
+  if (!streamId) {
+    return reply.status(400).send("Missing streamId");
+  }
 
-    // ── A) START ──
-    if (msg.type === "start") {
-      const { model, content } = msg;
-      if (!model || !content) {
-        return socket.send(
-          JSON.stringify({
-            type: "error",
-            message: "Both model and content are required",
-          }),
-        );
-      }
+  // Prepare raw HTTP response for SSE
+  const res = reply.raw;
+  // 1) SSE + CORS + chunked:
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+    "Access-Control-Allow-Origin": "*",
+    "Transfer-Encoding": "chunked",
+  });
+  res.flushHeaders();
 
-      sessionId = uuidv4();
-      const bufKey = `sess:${sessionId}:buf`;
-      const metaKey = `sess:${sessionId}:meta`;
-      const chan = `sess:${sessionId}:chan`;
+  // Replay any missed events
+  const lastEventIdHeader = request.headers["last-event-id"] || "-1";
+  const lastEventId = parseInt(lastEventIdHeader, 10);
+  const rawList = await redis.lrange(`chat:${streamId}`, 0, -1);
+  const events = rawList
+    .map(JSON.parse)
+    .reverse()
+    .filter((evt) => typeof evt.id === "number" && evt.id > lastEventId);
 
-      // init Redis
-      await Promise.all([
-        redis.del(bufKey),
-        redis.hset(metaKey, "isDone", "false"),
-        redis.expire(bufKey, SESSION_TTL),
-        redis.expire(metaKey, SESSION_TTL),
-      ]);
+  for (const evt of events) {
+    res.write(`id: ${evt.id}\nevent: message\ndata: ${evt.text}\n\n`);
+  }
 
-      // tell client its session
-      socket.send(JSON.stringify({ type: "session", sessionId }));
-
-      // subscribe this socket to live Pub/Sub
-      if (!channelSubscribers.has(chan)) {
-        channelSubscribers.set(chan, new Set());
-        await redisSub.subscribe(chan);
-      }
-      channelSubscribers.get(chan).add(socket);
-
-      // kick off the OpenAI streaming in the background
-      streamAndPublish(sessionId, model, content);
-    }
-
-    // ── B) RESUME ──
-    else if (msg.type === "resume") {
-      sessionId = msg.sessionId;
-      const lastIndex = Number(msg.lastIndex ?? -1);
-      const bufKey = `sess:${sessionId}:buf`;
-      const metaKey = `sess:${sessionId}:meta`;
-      const chan = `sess:${sessionId}:chan`;
-
-      // replay backlog
-      const tokens = await redis.lrange(bufKey, lastIndex + 1, -1);
-      tokens.forEach((tk, i) => {
-        socket.send(
-          JSON.stringify({
-            type: "token",
-            token: tk,
-            index: lastIndex + 1 + i,
-          }),
-        );
-      });
-
-      // subscribe for live updates
-      if (!channelSubscribers.has(chan)) {
-        channelSubscribers.set(chan, new Set());
-        await redisSub.subscribe(chan);
-      }
-      channelSubscribers.get(chan).add(socket);
-
-      // if already done, notify immediately
-      const done = await redis.hget(metaKey, "isDone");
-      if (done === "true") {
-        socket.send(JSON.stringify({ type: "done" }));
-      }
-    }
-
-    // ── UNKNOWN ──
-    else {
-      socket.send(
-        JSON.stringify({ type: "error", message: "Unknown message type" }),
-      );
-    }
+  // Subscribe for new events
+  const sub = new Redis();
+  await sub.subscribe(`chat:pub:${streamId}`);
+  sub.on("message", (_chan, message) => {
+    const evt = JSON.parse(message);
+    res.write(`id: ${evt.id}\nevent: message\ndata: ${evt.text}\n\n`);
   });
 
-  socket.on("close", () => {
-    if (sessionId) {
-      const chan = `sess:${sessionId}:chan`;
-      const subs = channelSubscribers.get(chan);
-      if (subs) {
-        subs.delete(socket);
-        if (subs.size === 0) {
-          channelSubscribers.delete(chan);
-          redisSub.unsubscribe(chan);
-        }
-      }
-    }
-    fastify.log.info(`Socket closed for session ${sessionId}`);
-  });
-
-  socket.on("error", (err) => {
-    fastify.log.error(`Socket error [${sessionId}]: ${err.message}`);
+  // Cleanup on client disconnect
+  request.raw.on("close", () => {
+    console.log("closing event stream");
+    sub.disconnect();
+    res.end();
   });
 });
 
