@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Preloaded } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 
@@ -10,47 +10,88 @@ interface ChatConversationProps {
 
 export const ChatConversation = ({ conversation }: ChatConversationProps) => {
   const [body, setBody] = useState<string>("");
-  const [response, setResponse] = useState<string>("");
+  const [reply, setReply] = useState("");
+  const [sessionId, setSessionId] = useState<string | null>(() =>
+    localStorage.getItem("chatSessionId"),
+  );
+  const [lastIndex, setLastIndex] = useState<number>(() =>
+    Number(localStorage.getItem("chatLastIndex") ?? -1),
+  );
+  const wsRef = useRef<any>(null);
 
-  const onSendRequest = async () => {
-    const req = await fetch("http://localhost:4000/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        body,
-        model: "gpt-3.5-turbo",
-      }),
-    });
-    const data = await req.json();
-    console.log({ data });
-    setResponse(data?.reply || "");
+  const connect = () => {
+    const ws = new WebSocket("ws://localhost:4000/conversation");
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      const storedSession = localStorage.getItem("chatSessionId");
+      const storedIndex = Number(localStorage.getItem("chatLastIndex") ?? -1);
+      if (storedSession) {
+        ws.send(
+          JSON.stringify({
+            type: "resume",
+            sessionId: storedSession,
+            lastIndex: storedIndex,
+          }),
+        );
+      }
+    };
+
+    ws.onmessage = ({ data }) => {
+      const msg = JSON.parse(data);
+      switch (msg.type) {
+        case "session":
+          setSessionId(msg.sessionId);
+          setLastIndex(-1);
+          localStorage.setItem("chatSessionId", msg.sessionId);
+          localStorage.setItem("chatLastIndex", "-1");
+          break;
+        case "token":
+          setReply((r) => r + msg.token);
+          setLastIndex(msg.index);
+          localStorage.setItem("chatLastIndex", String(msg.index));
+          break;
+        case "done":
+          console.log("Stream finished");
+          break;
+        case "error":
+          console.error("Error:", msg.message);
+          break;
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("Disconnected, retrying in 1s…");
+      setTimeout(connect, 1000);
+    };
   };
 
+  // Establish the socket once
   useEffect(() => {
-    const websocket = new WebSocket("http://localhost:4000/conversation");
-
-    websocket.onopen = () => {
-      websocket.send("hi");
-      console.log("websocket ok");
-    };
-
-    websocket.onerror = () => {
-      console.log("error websocket");
-    };
-
-    websocket.onmessage = (event) => {
-      console.log("receive message thru websockets");
-      console.log({ event });
-    };
+    connect();
+    return () => wsRef.current?.close();
   }, []);
+
+  const onSendRequest = () => {
+    // reset state
+    setReply("");
+    setLastIndex(-1);
+
+    wsRef.current.send(
+      JSON.stringify({
+        type: "start",
+        model: "gpt-4o-mini",
+        content: body,
+      }),
+    );
+    setBody("");
+  };
 
   return (
     <div className="grid grid-rows-[1fr_100px] h-screen overflow-auto">
       <div className="text-white whitespace-pre">
         {JSON.stringify(conversation, null, 2)}
-        {response && <p>{response}</p>}
+        {reply && <p>{reply}</p>}
       </div>
       <div className="relative">
         <textarea

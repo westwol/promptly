@@ -14,6 +14,8 @@
     "@fastify/websocket": "^11.1.0",
     "dotenv": "^16.5.0",
     "fastify": "^5.3.3",
-    "openai": "^5.3.0"
+    "ioredis": "^5.6.1",
+    "openai": "^5.3.0",
+    "uuid": "^11.1.0"
   }
 }
