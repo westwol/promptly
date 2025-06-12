@@ -25,6 +25,7 @@ export default defineSchema({
     content: v.string(), // Full message text (updated as tokens arrive)
     createdAt: v.string(), // Timestamp of first token
     updatedAt: v.string(), // Last token arrival time
+    resumableStreamId: v.optional(v.string()),
     status: v.union(
       v.literal("pending"),
       v.literal("streaming"),
