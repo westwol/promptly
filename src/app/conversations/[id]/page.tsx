@@ -1,6 +1,7 @@
 import { ChatConversation } from "@t3chat/components/ChatConversation";
 import { preloadQuery } from "convex/nextjs";
 import { api } from "../../../../convex/_generated/api";
+import { ConversationData } from "./types";
 
 interface ConversationPageParams {
   params: Promise<{ id: string }>;
@@ -19,5 +20,8 @@ export default async function ConversationPage({
     return <p>Couldnt find this conversation</p>;
   }
 
-  return <ChatConversation conversation={conversation} />;
+  const initialConversationData =
+    conversation._valueJSON as unknown as ConversationData;
+
+  return <ChatConversation initialConversationData={initialConversationData} />;
 }

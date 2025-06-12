@@ -1,111 +1,176 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Preloaded, useMutation, usePreloadedQuery } from "convex/react";
+import { useConvex, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 
+import { ConversationData } from "@t3chat/app/conversations/[id]/types";
+import { ChatMessage } from "./ChatMessage/ChatMessage";
+import { Doc } from "../../../convex/_generated/dataModel";
+
 interface ChatConversationProps {
-  conversation: Preloaded<typeof api.conversations.getById>;
+  initialConversationData: ConversationData;
 }
 
-export const ChatConversation = ({ conversation }: ChatConversationProps) => {
-  const conversationData = usePreloadedQuery(conversation);
+export const ChatConversation = ({
+  initialConversationData,
+}: ChatConversationProps) => {
+  const client = useConvex();
 
   const addMessageToConversation = useMutation(
     api.conversations.addNewMessageToConversation,
   );
 
+  const [messages, setMessages] = useState<Doc<"messages">[]>(
+    initialConversationData.messages,
+  );
   const [body, setBody] = useState<string>("");
-  const [messages, setMessages] = useState<any[]>(conversationData.messages);
-  const [streamId, setStreamId] = useState<string | null>(null);
+
+  const isStreamingResponse = useRef<boolean>(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [conversationData.messages]);
+    const watch = client.watchQuery(api.conversations.getById, {
+      conversationId: initialConversationData.conversation._id,
+    });
+
+    const unsubscribe = watch.onUpdate(() => {
+      const result = watch.localQueryResult();
+      setMessages(result?.messages || []);
+      console.log({ result });
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [client]);
+
+  useEffect(() => {
+    console.log("change conversationData?");
+  }, [initialConversationData]);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "auto" });
+    }
+  }, [messages]);
 
   const onSendRequest = async () => {
-    const conversationId = conversationData.conversation._id;
+    const conversationId = initialConversationData.conversation._id;
 
     addMessageToConversation({
       conversationId,
       content: body,
+      status: "complete",
     });
 
-    // 2) Start the OpenAI job and get a streamId
+    const currentDate = new Date().toISOString();
+
+    setMessages((messages) => [
+      ...messages,
+      {
+        _id: "temporal-id",
+        status: "complete",
+        role: "user",
+        content: body,
+        createdAt: currentDate,
+        updatedAt: currentDate,
+      } as Doc<"messages">,
+    ]);
+    setBody("");
+
     const res = await fetch("http://localhost:4000/api/chat/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         conversationId,
-        messages: conversationData.messages,
+        messages: [{ role: "user", content: body }],
       }),
     });
     const { streamId } = await res.json();
-    setStreamId(streamId);
+    onStartResumableStream(streamId);
+    console.log("trigger from api chat start");
   };
 
-  // Whenever we get a new streamId, open (or reopen) the SSE connection
-  useEffect(() => {
-    if (!streamId) return;
-
-    // Close existing connection if any
+  const onStartResumableStream = (streamId: string) => {
+    // Clean up previous event source
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
 
-    const es = new EventSource(
+    const eventSource = new EventSource(
       `http://localhost:4000/api/chat/stream?streamId=${streamId}`,
     );
-    console.log({ es });
-    eventSourceRef.current = es;
 
-    es.onmessage = (e) => {
-      // each e.data is the next token chunk
-      setMessages((msgs) => {
-        // append to the last "assistant" message or start a new one
-        const last = msgs[msgs.length - 1];
-        if (last?.role === "assistant") {
-          last.content += e.data;
-          return [...msgs.slice(0, -1), last];
-        } else {
-          return [...msgs, { role: "assistant", content: e.data }];
+    eventSourceRef.current = eventSource;
+
+    eventSource.onopen = () => {
+      isStreamingResponse.current = true;
+    };
+
+    eventSource.onmessage = (event) => {
+      const chunk = JSON.parse(event.data);
+      setMessages((messages) => {
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage?.resumableStreamId) {
+          const updatedMessage = {
+            ...lastMessage,
+            content: lastMessage.content + chunk.text,
+          };
+          return [...messages.slice(0, -1), updatedMessage];
         }
+        return messages;
       });
     };
 
-    es.onerror = (err) => {
+    eventSource.onerror = (err) => {
       console.error("SSE error", err);
-      // you can implement retry logic here if needed
     };
+  };
 
-    return () => {
-      es.close();
-    };
-  }, [streamId]);
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+
+    if (!lastMessage?.resumableStreamId) {
+      return;
+    }
+
+    if (lastMessage?.status !== "streaming") {
+      return;
+    }
+
+    if (isStreamingResponse.current) {
+      return;
+    }
+
+    console.log("trigger from useEffect");
+    onStartResumableStream(lastMessage.resumableStreamId);
+  }, [messages]);
 
   return (
     <div className="grid grid-rows-[1fr_100px] h-screen overflow-auto">
       <div
+        ref={messagesContainerRef}
         className="text-white"
         style={{
-          height: '100%',
+          height: "100%",
           overflowY: "auto",
           border: "1px solid #ccc",
           padding: 8,
+          scrollBehavior: "auto",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
         }}
       >
-        {conversationData.messages.map((m, i) => (
+        {messages.map((m, i) => (
           <div key={i} style={{ margin: "4px 0" }}>
-            <strong>{m.role === "user" ? "You" : "GPT"}:</strong> {m.content}
+            <strong>{m.role === "user" ? "You" : "GPT"}:</strong>
+            <ChatMessage content={m.content} />
           </div>
         ))}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} style={{ scrollMarginBottom: "20px" }} />
       </div>
       <div className="relative">
         <textarea

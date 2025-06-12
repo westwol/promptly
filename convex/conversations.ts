@@ -32,14 +32,24 @@ export const getById = query({
 export const addNewMessageToConversation = mutation({
   args: {
     conversationId: v.id("conversations"),
+    resumableStreamId: v.optional(v.string()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("streaming"),
+      v.literal("complete"),
+    ),
     content: v.string(),
   },
-  handler: async (ctx, { conversationId, content }) => {
+  handler: async (
+    ctx,
+    { conversationId, status, resumableStreamId, content },
+  ) => {
     const currentDate = new Date().toISOString();
     const messageId = await ctx.db.insert("messages", {
       conversationId,
       content,
-      status: "complete",
+      status,
+      resumableStreamId,
       role: "user",
       createdAt: currentDate,
       updatedAt: currentDate,
@@ -73,14 +83,13 @@ export const updateStreamingMessage = mutation({
   },
   handler: async (ctx, { messageId, content, token, tokenIndex }) => {
     const currentDate = new Date().toISOString();
-    
+
     // Update the main message content
     await ctx.db.patch(messageId, {
       content,
       status: "streaming",
       updatedAt: currentDate,
     });
-
   },
 });
 

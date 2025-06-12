@@ -20,16 +20,16 @@ const redis = new Redis({
 });
 
 async function startOpenAIJob(streamId, conversationId, messages) {
-  // 1) mark init
   await redis.lpush(`chat:${streamId}`, JSON.stringify({ type: "INIT" }));
 
-  // Create initial message in Convex without waiting
-  const messagePromise = client.mutation(
+  const messageId = await client.mutation(
     "conversations:addNewMessageToConversation",
     {
-      conversationId: messages[0].conversationId,
+      conversationId,
+      resumableStreamId: streamId,
+      status: "streaming",
       content: "",
-    }
+    },
   );
 
   // 2) kick off the V4 streaming call
@@ -51,39 +51,23 @@ async function startOpenAIJob(streamId, conversationId, messages) {
     const event = { id: idx++, text };
     await redis.lpush(`chat:${streamId}`, JSON.stringify(event));
     await redis.publish(`chat:pub:${streamId}`, JSON.stringify(event));
-
-    // Update message in Convex without waiting
-    messagePromise
-      .then(async (messageId) => {
-        await client.mutation("conversations:updateStreamingMessage", {
-          messageId,
-          content: fullContent,
-          token: text,
-          tokenIndex: idx - 1,
-        });
-      })
-      .catch(console.error);
   }
 
   // 4) mark done in Redis
   await redis.lpush(`chat:${streamId}`, JSON.stringify({ type: "DONE" }));
 
   // Mark message as complete in Convex
-  messagePromise
-    .then(async (messageId) => {
-      await client.mutation("conversations:completeMessage", {
-        messageId,
-        content: fullContent,
-      });
-    })
-    .catch(console.error);
+  await client.mutation("conversations:completeMessage", {
+    messageId,
+    content: fullContent,
+  });
 }
 
 fastify.post("/api/chat/start", async (request, reply) => {
   const { messages, conversationId } = request.body;
   const streamId = uuid();
   startOpenAIJob(streamId, conversationId, messages).catch((err) =>
-    console.error(err)
+    console.error(err),
   );
   return reply.send({ streamId });
 });
@@ -96,7 +80,6 @@ fastify.get("/api/chat/stream", async (request, reply) => {
 
   // Prepare raw HTTP response for SSE
   const res = reply.raw;
-  // 1) SSE + CORS + chunked:
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
@@ -106,17 +89,20 @@ fastify.get("/api/chat/stream", async (request, reply) => {
   });
   res.flushHeaders();
 
-  // Replay any missed events
-  const lastEventIdHeader = request.headers["last-event-id"] || "-1";
-  const lastEventId = parseInt(lastEventIdHeader, 10);
+  // Get all events from Redis and send them to the client
   const rawList = await redis.lrange(`chat:${streamId}`, 0, -1);
-  const events = rawList
-    .map(JSON.parse)
-    .reverse()
-    .filter((evt) => typeof evt.id === "number" && evt.id > lastEventId);
+  const events = rawList.map(JSON.parse).reverse();
 
+  // Send all events to the client
   for (const evt of events) {
-    res.write(`id: ${evt.id}\nevent: message\ndata: ${evt.text}\n\n`);
+    if (evt.type === "INIT") continue; // Skip INIT event
+    if (evt.type === "DONE") {
+      res.write(`event: done\ndata: ${JSON.stringify(evt)}\n\n`);
+      continue;
+    }
+    res.write(
+      `id: ${evt.id}\nevent: message\ndata: ${JSON.stringify(evt)}\n\n`,
+    );
   }
 
   // Subscribe for new events
@@ -124,7 +110,9 @@ fastify.get("/api/chat/stream", async (request, reply) => {
   await sub.subscribe(`chat:pub:${streamId}`);
   sub.on("message", (_chan, message) => {
     const evt = JSON.parse(message);
-    res.write(`id: ${evt.id}\nevent: message\ndata: ${evt.text}\n\n`);
+    res.write(
+      `id: ${evt.id}\nevent: message\ndata: ${JSON.stringify(evt)}\n\n`,
+    );
   });
 
   // Cleanup on client disconnect
