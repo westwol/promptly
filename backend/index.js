@@ -19,6 +19,27 @@ const redis = new Redis({
   port: +process.env.REDIS_PORT,
 });
 
+async function generateConversationTitle(conversationId, content) {
+  const titleCompletion = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages: [
+      {
+        role: "system",
+        content: `Generate a short, concise title (max 5 words) for based on the following content. Return only the title text, nothing else: ${content}`,
+      },
+    ],
+    max_tokens: 20,
+  });
+
+  const title =
+    titleCompletion.choices[0].message.content.trim() || "New conversation";
+
+  await client.mutation("conversations:updateConversation", {
+    conversationId,
+    title,
+  });
+}
+
 async function startOpenAIJob(streamId, conversationId, messages) {
   await redis.lpush(`chat:${streamId}`, JSON.stringify({ type: "INIT" }));
 
@@ -32,6 +53,11 @@ async function startOpenAIJob(streamId, conversationId, messages) {
       content: "",
     },
   );
+
+  const shouldGenerateTitle = messages.length === 1;
+  if (shouldGenerateTitle) {
+    generateConversationTitle(conversationId, messages[0].content);
+  }
 
   // 2) kick off the V4 streaming call
   const completion = await openai.chat.completions.create({

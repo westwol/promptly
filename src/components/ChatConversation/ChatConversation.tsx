@@ -9,6 +9,7 @@ import { ChatMessage } from "./ChatMessage/ChatMessage";
 import { Doc } from "../../../convex/_generated/dataModel";
 import { ThinkingIndicator } from "./ThinkingIndicator/ThinkingIndicator";
 import clsx from "clsx";
+import { ArrowUp } from "lucide-react";
 
 interface ChatConversationProps {
   initialConversationData: ConversationData;
@@ -176,45 +177,41 @@ export const ChatConversation = ({
   }, [messages, scrollToBottom]);
 
   return (
-    <div className="grid grid-rows-[1fr_100px] h-screen overflow-auto">
+    <div className="grid grid-rows-[1fr_100px] h-screen">
       <div
+        className="overflow-auto"
         ref={messagesContainerRef}
-        className="text-white flex flex-col gap-2"
-        style={{
-          height: "100%",
-          overflowY: "auto",
-          padding: 8,
-          scrollBehavior: "auto",
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-        }}
+        style={{ scrollBehavior: "auto" }}
       >
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            className={clsx(
-              "my-1",
-              m.role === "user" && "ml-auto bg-gray-800 rounded-md p-3",
-            )}
-          >
-            {m.role === "user" && <strong>You:</strong>}
-            <ChatMessage content={m.content} />
-          </div>
-        ))}
-        {shouldShowThinkingIndicator && <ThinkingIndicator />}
+        <div className="text-white flex flex-col gap-2 mx-auto w-full max-w-3xl space-y-12 px-4 pb-10 pt-4 whitespace-pre-wrap break-words">
+          {messages.map((m, i) => (
+            <div
+              key={i}
+              className={clsx(
+                "my-1",
+                m.role === "user" && "ml-auto bg-[#2C2632] rounded-md p-3",
+              )}
+            >
+              {m.role === "user" && <strong>You:</strong>}
+              <ChatMessage content={m.content} />
+            </div>
+          ))}
+          {shouldShowThinkingIndicator && <ThinkingIndicator />}
+        </div>
       </div>
-      <div className="relative">
+      <div className="relative mx-auto flex w-full flex-col items-stretch gap-2 rounded-t-xl bg-[#2C2632] px-3 pt-3 text-secondary-foreground max-sm:pb-6 sm:max-w-3xl">
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          className="bg-primary w-full h-full text-white outline-0"
-          placeholder="type something here"
+          className="w-full resize-none bg-transparent leading-6 text-white outline-none placeholder:text-secondary-foreground/60 disabled:opacity-0"
+          placeholder="Type your message here..."
         />
         <button
-          className="absolute bottom-5 right-5 z-10 bg-blue-500 p-2"
+          className="absolute bottom-5 right-5 flex items-center justify-center z-10 w-9 h-9 rounded-md send-button disabled:opacity-70"
           onClick={onSendRequest}
+          disabled={body.length === 0}
         >
-          Send
+          <ArrowUp color="white" size={20} />
         </button>
       </div>
     </div>

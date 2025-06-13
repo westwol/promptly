@@ -24,14 +24,14 @@ export const StartConversation = () => {
       const dummyConversation = {
         _id: "some-dummy-id",
         userId: "jh7abgx9czyf0es24jgnbyxgmd7hjwsr",
-        title: "New conversation",
+        title: "",
         conversationUuid: conversationId,
         updatedAt: currentDate,
         createdAt: currentDate,
       } as Doc<"conversations">;
       localStore.setQuery(api.conversations.get, {}, [
-        ...currentValue,
         dummyConversation,
+        ...currentValue,
       ]);
       localStore.setQuery(
         api.conversations.getById,
@@ -48,9 +48,8 @@ export const StartConversation = () => {
   const onSendRequest = async () => {
     const generatedConversationId = uuidv4();
 
-    router.push(`/conversations/${generatedConversationId}`);
-
     setIsInitialMessageSent(true);
+    router.push(`/conversations/${generatedConversationId}`);
 
     const conversationId = await createInitialConversation({
       conversationId: generatedConversationId,
