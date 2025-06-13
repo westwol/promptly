@@ -10,6 +10,7 @@ export default defineSchema({
 
   conversations: defineTable({
     userId: v.id("users"), // References to user id
+    conversationUuid: v.string(), // Conversation uuid
     title: v.string(), // Optional title for group chats or AI context label
     createdAt: v.string(), // When the conversation was started
     updatedAt: v.string(), // Last update time

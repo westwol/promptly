@@ -77,8 +77,10 @@ export const ChatMessage = React.memo(({ content }: ChatMessageProps) => {
 
           const { ref, ...safeProps } = props;
 
+          console.log({ ref });
+
           return match ? (
-            <div className="relative my-4">
+            <div className="relative">
               <div className="flex items-center justify-between bg-[#28213c] px-4 py-2 rounded-t-lg">
                 <span className="text-xs text-gray-300 lowercase tracking-wide">
                   {lang}
@@ -147,7 +149,8 @@ export const ChatMessage = React.memo(({ content }: ChatMessageProps) => {
                 </div>
               </div>
               <SyntaxHighlighter
-                style={THEME_HIGHLIGHT_STYLES as any}
+                /* @ts-expect-error adsosakod */
+                style={THEME_HIGHLIGHT_STYLES}
                 language={lang}
                 PreTag="div"
                 customStyle={CONTAINER_STYLES}

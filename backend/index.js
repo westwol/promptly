@@ -27,6 +27,7 @@ async function startOpenAIJob(streamId, conversationId, messages) {
     {
       conversationId,
       resumableStreamId: streamId,
+      role: "assistant",
       status: "streaming",
       content: "",
     },
@@ -55,6 +56,7 @@ async function startOpenAIJob(streamId, conversationId, messages) {
 
   // 4) mark done in Redis
   await redis.lpush(`chat:${streamId}`, JSON.stringify({ type: "DONE" }));
+  await redis.publish(`chat:pub:${streamId}`, JSON.stringify({ type: "DONE" }));
 
   // Mark message as complete in Convex
   await client.mutation("conversations:completeMessage", {
@@ -110,9 +112,13 @@ fastify.get("/api/chat/stream", async (request, reply) => {
   await sub.subscribe(`chat:pub:${streamId}`);
   sub.on("message", (_chan, message) => {
     const evt = JSON.parse(message);
-    res.write(
-      `id: ${evt.id}\nevent: message\ndata: ${JSON.stringify(evt)}\n\n`,
-    );
+    if (evt.type === "DONE") {
+      res.write(`event: done\ndata: ${JSON.stringify(evt)}\n\n`);
+    } else {
+      res.write(
+        `id: ${evt.id}\nevent: message\ndata: ${JSON.stringify(evt)}\n\n`,
+      );
+    }
   });
 
   // Cleanup on client disconnect

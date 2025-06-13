@@ -4,28 +4,54 @@ import { mutation, query } from "./_generated/server";
 export const get = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("conversations").collect();
+    return await ctx.db.query("conversations").order("desc").collect();
   },
 });
 
 export const getById = query({
-  args: { conversationId: v.string() },
-  handler: async (ctx, { conversationId }) => {
+  args: { conversationUuid: v.string() },
+  handler: async (ctx, { conversationUuid }) => {
     const conversation = await ctx.db
       .query("conversations")
-      .filter((q) => q.eq(q.field("_id"), conversationId))
+      .filter((q) => q.eq(q.field("conversationUuid"), conversationUuid))
       .first();
 
     if (!conversation) {
-      throw new Error(`Conversation with id ${conversationId} not found`);
+      throw new Error(`Conversation with id ${conversationUuid} not found`);
     }
 
     const messages = await ctx.db
       .query("messages")
-      .filter((q) => q.eq(q.field("conversationId"), conversationId))
+      .filter((q) => q.eq(q.field("conversationId"), conversation._id))
       .collect();
 
     return { conversation, messages };
+  },
+});
+
+export const createInitialConversation = mutation({
+  args: {
+    conversationId: v.string(),
+    content: v.string(),
+  },
+  handler: async (ctx, { conversationId, content }) => {
+    const currentDate = new Date().toISOString();
+    const newConversationId = await ctx.db.insert("conversations", {
+      userId: "jh7abgx9czyf0es24jgnbyxgmd7hjwsr" as any,
+      title: "New conversation",
+      conversationUuid: conversationId,
+      updatedAt: currentDate,
+      createdAt: currentDate,
+    });
+    await ctx.db.insert("messages", {
+      conversationId: newConversationId,
+      content,
+      status: "complete",
+      role: "user",
+      createdAt: currentDate,
+      updatedAt: currentDate,
+    });
+    return newConversationId;
   },
 });
 
@@ -33,6 +59,11 @@ export const addNewMessageToConversation = mutation({
   args: {
     conversationId: v.id("conversations"),
     resumableStreamId: v.optional(v.string()),
+    role: v.union(
+      v.literal("user"),
+      v.literal("assistant"),
+      v.literal("system"),
+    ),
     status: v.union(
       v.literal("pending"),
       v.literal("streaming"),
@@ -42,7 +73,7 @@ export const addNewMessageToConversation = mutation({
   },
   handler: async (
     ctx,
-    { conversationId, status, resumableStreamId, content },
+    { conversationId, status, resumableStreamId, role, content },
   ) => {
     const currentDate = new Date().toISOString();
     const messageId = await ctx.db.insert("messages", {
@@ -50,46 +81,11 @@ export const addNewMessageToConversation = mutation({
       content,
       status,
       resumableStreamId,
-      role: "user",
+      role,
       createdAt: currentDate,
       updatedAt: currentDate,
     });
     return messageId;
-  },
-});
-
-export const updateMessageFromConversation = mutation({
-  args: {
-    messageId: v.id("messages"),
-    content: v.string(),
-  },
-  handler: async (ctx, { messageId, content }) => {
-    const currentDate = new Date().toISOString();
-    await ctx.db.patch(messageId, {
-      content,
-      status: "streaming",
-      role: "assistant",
-      updatedAt: currentDate,
-    });
-  },
-});
-
-export const updateStreamingMessage = mutation({
-  args: {
-    messageId: v.id("messages"),
-    content: v.string(),
-    token: v.string(),
-    tokenIndex: v.number(),
-  },
-  handler: async (ctx, { messageId, content, token, tokenIndex }) => {
-    const currentDate = new Date().toISOString();
-
-    // Update the main message content
-    await ctx.db.patch(messageId, {
-      content,
-      status: "streaming",
-      updatedAt: currentDate,
-    });
   },
 });
 
