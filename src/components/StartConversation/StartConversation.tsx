@@ -2,23 +2,18 @@
 
 import { useRef, useState } from "react";
 import { useMutation } from "convex/react";
+import { ArrowUp } from "lucide-react";
+
 import { api } from "../../../convex/_generated/api";
 import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/navigation";
 import { Doc } from "../../../convex/_generated/dataModel";
-import { ThinkingIndicator } from "../ChatConversation/ThinkingIndicator";
-import { ChatMessage } from "../ChatConversation/ChatMessage/ChatMessage";
-import { ArrowUp } from "lucide-react";
-import clsx from "clsx";
 
 export const StartConversation = () => {
-  const [isInitialMessageSent, setIsInitialMessageSent] =
-    useState<boolean>(false);
-
   const createInitialConversation = useMutation(
     api.conversations.createInitialConversation,
   ).withOptimisticUpdate((localStore, args) => {
-    const { conversationId } = args;
+    const { conversationId, content } = args;
     const currentValue = localStore.getQuery(api.conversations.get);
     if (currentValue !== undefined) {
       const currentDate = new Date().toISOString();
@@ -38,7 +33,11 @@ export const StartConversation = () => {
       localStore.setQuery(
         api.conversations.getById,
         { conversationUuid: conversationId },
-        { conversation: dummyConversation, messages: [] },
+        {
+          conversation: dummyConversation,
+          /* @ts-expect-error oks */
+          messages: [{ role: "user", content }],
+        },
       );
     }
   });
@@ -49,8 +48,8 @@ export const StartConversation = () => {
 
   const onSendRequest = async () => {
     const generatedConversationId = uuidv4();
+    const generatedResumableStreamId = uuidv4();
 
-    setIsInitialMessageSent(true);
     router.push(`/conversations/${generatedConversationId}`);
 
     const conversationId = await createInitialConversation({
@@ -63,6 +62,7 @@ export const StartConversation = () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         conversationId,
+        resumableStreamId: generatedResumableStreamId,
         messages: [{ role: "user", content: body }],
       }),
     });
@@ -76,31 +76,21 @@ export const StartConversation = () => {
         style={{ scrollBehavior: "auto" }}
       >
         <div className="text-white flex flex-col gap-2 mx-auto w-full max-w-3xl space-y-12 px-4 pb-10 pt-4 whitespace-pre-wrap break-words">
-          {isInitialMessageSent ? (
-            <>
-              <div className={clsx("my-1 ml-auto bg-[#2C2632] rounded-md p-3")}>
-                <strong>You:</strong>
-                <ChatMessage content={body} />
-              </div>
-              <ThinkingIndicator />
-            </>
-          ) : (
-            <ul>
-              <li onClick={() => setBody("How far is the universe?")}>
-                How far is the universe?
-              </li>
-              <li onClick={() => setBody("How many bones a human has?")}>
-                How many bones a human has?
-              </li>
-              <li
-                onClick={() =>
-                  setBody("Give me a sample hello world endpoint in rust")
-                }
-              >
-                Give me a sample hello world endpoint in rust
-              </li>
-            </ul>
-          )}
+          <ul>
+            <li onClick={() => setBody("How far is the universe?")}>
+              How far is the universe?
+            </li>
+            <li onClick={() => setBody("How many bones a human has?")}>
+              How many bones a human has?
+            </li>
+            <li
+              onClick={() =>
+                setBody("Give me a sample hello world endpoint in rust")
+              }
+            >
+              Give me a sample hello world endpoint in rust
+            </li>
+          </ul>
         </div>
       </div>
       <div className="relative mx-auto flex w-full flex-col items-stretch gap-2 rounded-t-xl bg-[#2C2632] px-3 pt-3 text-secondary-foreground max-sm:pb-6 sm:max-w-3xl">
