@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useConvex, useMutation } from "convex/react";
+import { v4 as uuidv4 } from "uuid";
 import { api } from "../../../convex/_generated/api";
 
 import { ConversationData } from "@t3chat/app/conversations/[id]/types";
@@ -47,12 +48,16 @@ export const ChatConversation = ({
   const onSendRequest = async () => {
     const conversationId = initialConversationData.conversation._id;
 
+    const generatedResumableStreamId = uuidv4();
+
     addMessageToConversation({
       conversationId,
       content: body,
       role: "user",
       status: "complete",
     });
+
+    onStartResumableStream(generatedResumableStreamId);
 
     const currentDate = new Date().toISOString();
 
@@ -69,16 +74,16 @@ export const ChatConversation = ({
     ]);
     setBody("");
 
-    const res = await fetch("http://localhost:4000/api/chat/start", {
+    await fetch("http://localhost:4000/api/chat/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         conversationId,
+        resumableStreamId: generatedResumableStreamId,
         messages: [{ role: "user", content: body }],
       }),
     });
-    const { streamId } = await res.json();
-    onStartResumableStream(streamId);
+
     console.log("trigger from api chat start");
   };
 
