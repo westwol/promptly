@@ -41,60 +41,80 @@ async function generateConversationTitle(conversationId, content) {
 }
 
 async function startOpenAIJob(streamId, conversationId, messages) {
-  await redis.lpush(`chat:${streamId}`, JSON.stringify({ type: "INIT" }));
+  try {
+    // Initialize stream
+    await redis.lpush(`chat:${streamId}`, JSON.stringify({ type: "INIT" }));
 
-  const messageId = await client.mutation(
-    "conversations:addNewMessageToConversation",
-    {
-      conversationId,
-      resumableStreamId: streamId,
-      role: "assistant",
-      status: "streaming",
-      content: "",
-    },
-  );
+    const messageId = await client.mutation(
+      "conversations:addNewMessageToConversation",
+      {
+        conversationId,
+        resumableStreamId: streamId,
+        role: "assistant",
+        status: "streaming",
+        content: "",
+      }
+    );
 
-  const shouldGenerateTitle = messages.length === 1;
-  if (shouldGenerateTitle) {
-    generateConversationTitle(conversationId, messages[0].content);
+    const shouldGenerateTitle = messages.length === 1;
+    if (shouldGenerateTitle) {
+      generateConversationTitle(conversationId, messages[0].content).catch(
+        (err) => console.error("Title generation failed:", err)
+      );
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages,
+      stream: true,
+    });
+
+    let idx = 0;
+    let fullContent = "";
+
+    for await (const chunk of completion) {
+      const text = chunk.choices?.[0]?.delta?.content;
+      if (!text) continue;
+
+      fullContent += text;
+      const event = { id: idx++, text };
+
+      // Send events immediately without batching
+      await Promise.all([
+        redis.lpush(`chat:${streamId}`, JSON.stringify(event)),
+        redis.publish(`chat:pub:${streamId}`, JSON.stringify(event)),
+      ]);
+    }
+
+    // Mark completion
+    await Promise.all([
+      redis.lpush(`chat:${streamId}`, JSON.stringify({ type: "DONE" })),
+      redis.publish(`chat:pub:${streamId}`, JSON.stringify({ type: "DONE" })),
+    ]);
+
+    // Update message in Convex
+    await client.mutation("conversations:completeMessage", {
+      messageId,
+      content: fullContent,
+    });
+
+    // Set TTL for cleanup
+    await redis.expire(`chat:${streamId}`, 3600);
+  } catch (error) {
+    console.error("Stream processing error:", error);
+    // Ensure we mark the stream as done even on error
+    await Promise.all([
+      redis.lpush(`chat:${streamId}`, JSON.stringify({ type: "DONE" })),
+      redis.publish(`chat:pub:${streamId}`, JSON.stringify({ type: "DONE" })),
+    ]);
+    throw error;
   }
-
-  // 2) kick off the V4 streaming call
-  const completion = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
-    messages,
-    stream: true,
-  });
-
-  let idx = 0;
-  let fullContent = "";
-  // 3) loop over each chunk as it arrives
-  for await (const chunk of completion) {
-    const text = chunk.choices?.[0]?.delta?.content;
-    if (!text) continue;
-
-    fullContent += text;
-    // persist + publish
-    const event = { id: idx++, text };
-    await redis.lpush(`chat:${streamId}`, JSON.stringify(event));
-    await redis.publish(`chat:pub:${streamId}`, JSON.stringify(event));
-  }
-
-  // 4) mark done in Redis
-  await redis.lpush(`chat:${streamId}`, JSON.stringify({ type: "DONE" }));
-  await redis.publish(`chat:pub:${streamId}`, JSON.stringify({ type: "DONE" }));
-
-  // Mark message as complete in Convex
-  await client.mutation("conversations:completeMessage", {
-    messageId,
-    content: fullContent,
-  });
 }
 
 fastify.post("/api/chat/start", async (request, reply) => {
   const { messages, conversationId, resumableStreamId } = request.body;
   startOpenAIJob(resumableStreamId, conversationId, messages).catch((err) =>
-    console.error(err),
+    console.error(err)
   );
   return reply.send({ streamId });
 });
@@ -105,53 +125,76 @@ fastify.get("/api/chat/stream", async (request, reply) => {
     return reply.status(400).send("Missing streamId");
   }
 
-  // Prepare raw HTTP response for SSE
   const res = reply.raw;
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
     Connection: "keep-alive",
     "Access-Control-Allow-Origin": "*",
-    "Transfer-Encoding": "chunked",
   });
   res.flushHeaders();
 
-  // Get all events from Redis and send them to the client
-  const rawList = await redis.lrange(`chat:${streamId}`, 0, -1);
-  const events = rawList.map(JSON.parse).reverse();
+  let isClientConnected = true;
 
-  // Send all events to the client
-  for (const evt of events) {
-    if (evt.type === "INIT") continue; // Skip INIT event
-    if (evt.type === "DONE") {
-      res.write(`event: done\ndata: ${JSON.stringify(evt)}\n\n`);
-      continue;
-    }
-    res.write(
-      `id: ${evt.id}\nevent: message\ndata: ${JSON.stringify(evt)}\n\n`,
-    );
-  }
+  try {
+    // Get existing events
+    const rawList = await redis.lrange(`chat:${streamId}`, 0, -1);
+    const events = rawList.map(JSON.parse).reverse();
 
-  // Subscribe for new events
-  const sub = new Redis();
-  await sub.subscribe(`chat:pub:${streamId}`);
-  sub.on("message", (_chan, message) => {
-    const evt = JSON.parse(message);
-    if (evt.type === "DONE") {
-      res.write(`event: done\ndata: ${JSON.stringify(evt)}\n\n`);
-    } else {
+    // Send existing events
+    for (const evt of events) {
+      if (!isClientConnected) break;
+
+      if (evt.type === "INIT") continue;
+      if (evt.type === "DONE") {
+        res.write(`event: done\ndata: ${JSON.stringify(evt)}\n\n`);
+        continue;
+      }
       res.write(
-        `id: ${evt.id}\nevent: message\ndata: ${JSON.stringify(evt)}\n\n`,
+        `id: ${evt.id}\nevent: message\ndata: ${JSON.stringify(evt)}\n\n`
       );
     }
-  });
 
-  // Cleanup on client disconnect
-  request.raw.on("close", () => {
-    console.log("closing event stream");
-    sub.disconnect();
-    res.end();
-  });
+    // Subscribe for new events
+    const sub = new Redis({
+      host: process.env.REDIS_HOST,
+      port: +process.env.REDIS_PORT,
+    });
+
+    await sub.subscribe(`chat:pub:${streamId}`);
+
+    sub.on("message", (_chan, message) => {
+      if (!isClientConnected) return;
+
+      try {
+        const evt = JSON.parse(message);
+        if (evt.type === "DONE") {
+          res.write(`event: done\ndata: ${JSON.stringify(evt)}\n\n`);
+        } else {
+          res.write(
+            `id: ${evt.id}\nevent: message\ndata: ${JSON.stringify(evt)}\n\n`
+          );
+        }
+      } catch (error) {
+        console.error("Error processing message:", error);
+      }
+    });
+
+    // Cleanup on client disconnect
+    request.raw.on("close", () => {
+      isClientConnected = false;
+      sub.disconnect();
+      res.end();
+    });
+  } catch (error) {
+    console.error("Stream setup error:", error);
+    if (isClientConnected) {
+      res.write(
+        `event: error\ndata: ${JSON.stringify({ message: "Internal server error" })}\n\n`
+      );
+      res.end();
+    }
+  }
 });
 
 await fastify.listen({ port: 4000 });
