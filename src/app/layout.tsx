@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Nunito_Sans } from "next/font/google";
 import "./globals.css";
-import { BaseLayout } from "@t3chat/components/layout/BaseLayout";
 import { ConvexClientProvider } from "@t3chat/providers/ConvexClientProvider";
 
 const montserrat = Nunito_Sans({
@@ -22,9 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${montserrat.variable}  antialiased`}>
-        <ConvexClientProvider>
-          <BaseLayout>{children}</BaseLayout>
-        </ConvexClientProvider>
+        <ConvexClientProvider>{children}</ConvexClientProvider>
       </body>
     </html>
   );

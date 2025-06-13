@@ -2,15 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useQuery } from "convex/react";
+import { Preloaded, usePreloadedQuery } from "convex/react";
 import { isToday, isYesterday, isThisWeek } from "date-fns";
 
 import { api } from "../../../../../../convex/_generated/api";
 import { Doc } from "../../../../../../convex/_generated/dataModel";
 import { useMemo } from "react";
 
-export const ChatList = () => {
-  const conversations = useQuery(api.conversations.get);
+interface ChatListProps {
+  preloadedConversations: Preloaded<typeof api.conversations.get>;
+}
+
+export const ChatList = ({ preloadedConversations }: ChatListProps) => {
+  const conversations = usePreloadedQuery(preloadedConversations);
   const pathname = usePathname();
 
   const groupedConversations = useMemo(() => {
