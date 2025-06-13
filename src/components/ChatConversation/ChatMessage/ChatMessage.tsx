@@ -174,7 +174,7 @@ export const ChatMessage = React.memo(({ content }: ChatMessageProps) => {
               </SyntaxHighlighter>
             </div>
           ) : (
-            <code className={clsx(className, "overflow-auto text-sm rounded-md px-1.5 bg-secondary/30 py-1")} {...props}>
+            <code className={clsx(className, "overflow-auto text-sm rounded-md px-1.5 bg-[#2C2632] py-1")} {...props}>
               {children}
             </code>
           );

@@ -18,6 +18,12 @@ body {
   font-family: var(--font-montserrat);
 }
 
+html,
+body {
+  overscroll-behavior-y: none;
+  background-color: #221d27;
+}
+
 @theme {
   --color-primary: hsla(324, 20%, 10%, 1);
   --color-secondary: hsla(332 100% 20%);
