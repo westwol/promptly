@@ -55,6 +55,15 @@ export const ChatMessage = React.memo(({ content }: ChatMessageProps) => {
   return (
     <ReactMarkdown
       components={{
+        ul: ({ children }) => (
+          <ul className="list-disc p-0 marker:text-gray-400">{children}</ul>
+        ),
+        ol: ({ children }) => (
+          <ol className="p-0 list-disc">{children}</ol>
+        ),
+        li: ({ children }) => (
+          <li className="text-gray-200 p-0">{children}</li>
+        ),
         code({ className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || "");
           const lang = match ? match[1].toLowerCase() : "";

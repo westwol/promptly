@@ -38,7 +38,7 @@ export const createInitialConversation = mutation({
     const currentDate = new Date().toISOString();
     const newConversationId = await ctx.db.insert("conversations", {
       userId: "jh7abgx9czyf0es24jgnbyxgmd7hjwsr" as any,
-      title: "New conversation",
+      title: "",
       conversationUuid: conversationId,
       updatedAt: currentDate,
       createdAt: currentDate,
@@ -52,6 +52,20 @@ export const createInitialConversation = mutation({
       updatedAt: currentDate,
     });
     return newConversationId;
+  },
+});
+
+export const updateConversation = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    title: v.string(),
+  },
+  handler: async (ctx, { conversationId, title }) => {
+    const currentDate = new Date().toISOString();
+    await ctx.db.patch(conversationId, {
+      title,
+      updatedAt: currentDate,
+    });
   },
 });
 
