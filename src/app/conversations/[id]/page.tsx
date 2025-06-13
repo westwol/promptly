@@ -5,6 +5,7 @@ import { ChatConversation } from "@t3chat/components/ChatConversation";
 
 import { api } from "../../../../convex/_generated/api";
 import { ConversationData } from "./types";
+import { BaseLayout } from "@t3chat/components/layout/BaseLayout";
 
 interface ConversationPageParams {
   params: Promise<{ id: string }>;
@@ -12,10 +13,13 @@ interface ConversationPageParams {
 
 const getCachedConversation = unstable_cache(
   async (conversationId: string) => {
-    const conversation = await preloadQuery(api.conversations.getById, {
-      conversationUuid: conversationId,
-    });
-    return conversation;
+    const [conversation, conversations] = await Promise.all([
+      preloadQuery(api.conversations.getById, {
+        conversationUuid: conversationId,
+      }),
+      preloadQuery(api.conversations.get),
+    ]);
+    return { conversation, conversations };
   },
   ["conversation"],
   { revalidate: 3600 }, // 1 hour
@@ -30,14 +34,18 @@ export default async function ConversationPage({
 }: ConversationPageParams) {
   const { id: conversationId } = await params;
 
-  const conversation = await getCachedConversation(conversationId);
+  const data = await getCachedConversation(conversationId);
 
-  if (!conversation) {
+  if (!data.conversation) {
     return <p>Couldnt find this conversation</p>;
   }
 
-  const initialConversationData =
-    conversation._valueJSON as unknown as ConversationData;
+  const initialConversationData = data.conversation
+    ._valueJSON as unknown as ConversationData;
 
-  return <ChatConversation initialConversationData={initialConversationData} />;
+  return (
+    <BaseLayout preloadedConversations={data.conversations}>
+      <ChatConversation initialConversationData={initialConversationData} />;
+    </BaseLayout>
+  );
 }

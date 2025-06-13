@@ -4,8 +4,14 @@ import { ChatList } from "./ChatList";
 import Link from "next/link";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Preloaded } from "convex/react";
+import { api } from "../../../../../convex/_generated/api";
 
-export const Sidebar = () => {
+interface SidebarProps {
+  preloadedConversations: Preloaded<typeof api.conversations.get>;
+}
+
+export const Sidebar = ({ preloadedConversations }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
@@ -23,7 +29,7 @@ export const Sidebar = () => {
           {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
       </div>
-      
+
       {!isCollapsed && (
         <>
           <div className="px-4">
@@ -35,7 +41,7 @@ export const Sidebar = () => {
             </Link>
           </div>
           <div className="flex-1 overflow-y-auto px-4">
-            <ChatList />
+            <ChatList preloadedConversations={preloadedConversations} />
           </div>
         </>
       )}

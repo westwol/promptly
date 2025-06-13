@@ -7,12 +7,21 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@t3chat/components/ui/ResizablePanel";
+import { Preloaded } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
-export const BaseLayout = ({ children }: PropsWithChildren) => {
+interface BaseLayoutProps {
+  preloadedConversations: Preloaded<typeof api.conversations.get>;
+}
+
+export const BaseLayout = ({
+  children,
+  preloadedConversations,
+}: PropsWithChildren<BaseLayoutProps>) => {
   return (
     <ResizablePanelGroup direction="horizontal">
       <ResizablePanel defaultSize={20} minSize={15} maxSize={50}>
-        <Sidebar />
+        <Sidebar preloadedConversations={preloadedConversations} />
       </ResizablePanel>
       <ResizableHandle className="bg-transparent border-0" withHandle />
       <ResizablePanel defaultSize={80}>
