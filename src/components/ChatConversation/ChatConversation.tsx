@@ -5,7 +5,6 @@ import { useConvex, useMutation } from "convex/react";
 import { v4 as uuidv4 } from "uuid";
 import { api } from "../../../convex/_generated/api";
 
-import { ConversationData } from "@t3chat/app/conversations/[id]/types";
 import { ChatMessage } from "./ChatMessage/ChatMessage";
 import { Doc } from "../../../convex/_generated/dataModel";
 import { ThinkingIndicator } from "./ThinkingIndicator/ThinkingIndicator";
@@ -24,21 +23,17 @@ const shouldDisplayThinkingIndicator = (messages: Doc<"messages">[]) => {
 };
 
 interface ChatConversationProps {
-  initialConversationData: ConversationData;
+  conversationId: string;
 }
 
-export const ChatConversation = ({
-  initialConversationData,
-}: ChatConversationProps) => {
+export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
   const client = useConvex();
 
   const addMessageToConversation = useMutation(
     api.conversations.addNewMessageToConversation,
   );
 
-  const [messages, setMessages] = useState<Doc<"messages">[]>(
-    initialConversationData.messages,
-  );
+  const [messages, setMessages] = useState<Doc<"messages">[]>([]);
 
   const [body, setBody] = useState<string>("");
   const isStreamingResponse = useRef<boolean>(false);
@@ -55,12 +50,10 @@ export const ChatConversation = ({
   }, []);
 
   const onSendRequest = async () => {
-    const conversationId = initialConversationData.conversation._id;
-
     const generatedResumableStreamId = uuidv4();
 
     addMessageToConversation({
-      conversationId,
+      conversationUuid: conversationId,
       content: body,
       role: "user",
       status: "complete",
@@ -162,7 +155,7 @@ export const ChatConversation = ({
 
   useEffect(() => {
     const watch = client.watchQuery(api.conversations.getById, {
-      conversationUuid: initialConversationData.conversation.conversationUuid,
+      conversationUuid: conversationId,
     });
 
     const unsubscribe = watch.onUpdate(() => {
@@ -178,7 +171,7 @@ export const ChatConversation = ({
     return () => {
       unsubscribe();
     };
-  }, [client, initialConversationData.conversation.conversationUuid]);
+  }, [client, conversationId]);
 
   useEffect(() => {
     scrollToBottom();
