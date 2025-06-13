@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import {
@@ -63,6 +64,9 @@ export const ChatMessage = React.memo(({ content }: ChatMessageProps) => {
         ),
         li: ({ children }) => (
           <li className="text-gray-200 p-0">{children}</li>
+        ),
+        pre: ({ children }) => (
+          <div className="group">{children}</div>
         ),
         code({ className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || "");
@@ -170,7 +174,7 @@ export const ChatMessage = React.memo(({ content }: ChatMessageProps) => {
               </SyntaxHighlighter>
             </div>
           ) : (
-            <code className={className} {...props}>
+            <code className={clsx(className, "overflow-auto text-sm rounded-md px-1.5 bg-secondary/30 py-1")} {...props}>
               {children}
             </code>
           );
