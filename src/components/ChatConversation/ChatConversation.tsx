@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useConvex, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 
 import { ConversationData } from "@t3chat/app/conversations/[id]/types";
 import { ChatMessage } from "./ChatMessage/ChatMessage";
 import { Doc } from "../../../convex/_generated/dataModel";
+import { ThinkingIndicator } from "./ThinkingIndicator/ThinkingIndicator";
+import clsx from "clsx";
 
 interface ChatConversationProps {
   initialConversationData: ConversationData;
@@ -24,38 +26,22 @@ export const ChatConversation = ({
   const [messages, setMessages] = useState<Doc<"messages">[]>(
     initialConversationData.messages,
   );
-  const [body, setBody] = useState<string>("");
 
+  const [body, setBody] = useState<string>("");
   const isStreamingResponse = useRef<boolean>(false);
   const eventSourceRef = useRef<EventSource | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const watch = client.watchQuery(api.conversations.getById, {
-      conversationId: initialConversationData.conversation._id,
-    });
+  const shouldShowThinkingIndicator =
+    messages.length > 0 &&
+    messages[messages.length - 1].status === "streaming" &&
+    messages[messages.length - 1].content.length === 0;
 
-    const unsubscribe = watch.onUpdate(() => {
-      const result = watch.localQueryResult();
-      setMessages(result?.messages || []);
-      console.log({ result });
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [client]);
-
-  useEffect(() => {
-    console.log("change conversationData?");
-  }, [initialConversationData]);
-
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "auto" });
-    }
-  }, [messages]);
+  const scrollToBottom = useCallback(() => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "instant" });
+  }, []);
 
   const onSendRequest = async () => {
     const conversationId = initialConversationData.conversation._id;
@@ -63,6 +49,7 @@ export const ChatConversation = ({
     addMessageToConversation({
       conversationId,
       content: body,
+      role: "user",
       status: "complete",
     });
 
@@ -125,6 +112,26 @@ export const ChatConversation = ({
       });
     };
 
+    eventSource.addEventListener("done", () => {
+      console.log("Stream completed, closing connection");
+      eventSource.close();
+      setMessages((messages) => {
+        const lastMessage = messages[messages.length - 1];
+        if (
+          lastMessage?.resumableStreamId &&
+          lastMessage.status === "streaming"
+        ) {
+          const updatedMessage: Doc<"messages"> = {
+            ...lastMessage,
+            status: "complete",
+          };
+          return [...messages.slice(0, -1), updatedMessage];
+        }
+        return messages;
+      });
+      isStreamingResponse.current = false;
+    });
+
     eventSource.onerror = (err) => {
       console.error("SSE error", err);
     };
@@ -149,15 +156,33 @@ export const ChatConversation = ({
     onStartResumableStream(lastMessage.resumableStreamId);
   }, [messages]);
 
+  useEffect(() => {
+    const watch = client.watchQuery(api.conversations.getById, {
+      conversationUuid: initialConversationData.conversation.conversationUuid,
+    });
+
+    const unsubscribe = watch.onUpdate(() => {
+      const result = watch.localQueryResult();
+      setMessages(result?.messages || []);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [client, initialConversationData.conversation.conversationUuid]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
   return (
     <div className="grid grid-rows-[1fr_100px] h-screen overflow-auto">
       <div
         ref={messagesContainerRef}
-        className="text-white"
+        className="text-white flex flex-col gap-2"
         style={{
           height: "100%",
           overflowY: "auto",
-          border: "1px solid #ccc",
           padding: 8,
           scrollBehavior: "auto",
           whiteSpace: "pre-wrap",
@@ -165,12 +190,18 @@ export const ChatConversation = ({
         }}
       >
         {messages.map((m, i) => (
-          <div key={i} style={{ margin: "4px 0" }}>
-            <strong>{m.role === "user" ? "You" : "GPT"}:</strong>
+          <div
+            key={i}
+            className={clsx(
+              "my-1",
+              m.role === "user" && "ml-auto bg-gray-800 rounded-md p-3",
+            )}
+          >
+            {m.role === "user" && <strong>You:</strong>}
             <ChatMessage content={m.content} />
           </div>
         ))}
-        <div ref={messagesEndRef} style={{ scrollMarginBottom: "20px" }} />
+        {shouldShowThinkingIndicator && <ThinkingIndicator />}
       </div>
       <div className="relative">
         <textarea
