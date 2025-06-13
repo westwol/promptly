@@ -12,6 +12,17 @@ import { ThinkingIndicator } from "./ThinkingIndicator/ThinkingIndicator";
 import clsx from "clsx";
 import { ArrowUp } from "lucide-react";
 
+const shouldDisplayThinkingIndicator = (messages: Doc<"messages">[]) => {
+  if (messages.length === 0) {
+    return false;
+  }
+  const lastMessage = messages[messages.length - 1];
+  return (
+    (lastMessage.status === "streaming" && lastMessage.content.length === 0) ||
+    lastMessage.role === "user"
+  );
+};
+
 interface ChatConversationProps {
   initialConversationData: ConversationData;
 }
@@ -31,13 +42,11 @@ export const ChatConversation = ({
 
   const [body, setBody] = useState<string>("");
   const isStreamingResponse = useRef<boolean>(false);
+  const lastStreamReceived = useRef<string>("");
   const eventSourceRef = useRef<EventSource | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const shouldShowThinkingIndicator =
-    messages.length > 0 &&
-    messages[messages.length - 1].status === "streaming" &&
-    messages[messages.length - 1].content.length === 0;
+  const shouldShowThinkingIndicator = shouldDisplayThinkingIndicator(messages);
 
   const scrollToBottom = useCallback(() => {
     const el = messagesContainerRef.current;
@@ -57,8 +66,6 @@ export const ChatConversation = ({
       status: "complete",
     });
 
-    onStartResumableStream(generatedResumableStreamId);
-
     const currentDate = new Date().toISOString();
 
     setMessages((messages) => [
@@ -74,7 +81,7 @@ export const ChatConversation = ({
     ]);
     setBody("");
 
-    await fetch("http://localhost:4000/api/chat/start", {
+    fetch("http://localhost:4000/api/chat/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -83,8 +90,6 @@ export const ChatConversation = ({
         messages: [{ role: "user", content: body }],
       }),
     });
-
-    console.log("trigger from api chat start");
   };
 
   const onStartResumableStream = (streamId: string) => {
@@ -98,19 +103,19 @@ export const ChatConversation = ({
     );
 
     eventSourceRef.current = eventSource;
+    lastStreamReceived.current = streamId;
 
     eventSource.onopen = () => {
       isStreamingResponse.current = true;
     };
 
     eventSource.onmessage = (event) => {
-      const chunk = JSON.parse(event.data);
       setMessages((messages) => {
         const lastMessage = messages[messages.length - 1];
         if (lastMessage?.resumableStreamId) {
           const updatedMessage = {
             ...lastMessage,
-            content: lastMessage.content + chunk.text,
+            content: lastMessage.content + event.data.replace(/\\n/g, "\n"),
           };
           return [...messages.slice(0, -1), updatedMessage];
         }
@@ -121,20 +126,6 @@ export const ChatConversation = ({
     eventSource.addEventListener("done", () => {
       console.log("Stream completed, closing connection");
       eventSource.close();
-      setMessages((messages) => {
-        const lastMessage = messages[messages.length - 1];
-        if (
-          lastMessage?.resumableStreamId &&
-          lastMessage.status === "streaming"
-        ) {
-          const updatedMessage: Doc<"messages"> = {
-            ...lastMessage,
-            status: "complete",
-          };
-          return [...messages.slice(0, -1), updatedMessage];
-        }
-        return messages;
-      });
       isStreamingResponse.current = false;
     });
 
@@ -146,7 +137,13 @@ export const ChatConversation = ({
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
 
+    console.log({ lastMessage });
+
     if (!lastMessage?.resumableStreamId) {
+      return;
+    }
+
+    if (lastMessage.resumableStreamId === lastStreamReceived.current) {
       return;
     }
 
@@ -159,6 +156,7 @@ export const ChatConversation = ({
     }
 
     console.log("trigger from useEffect");
+    lastStreamReceived.current = lastMessage.resumableStreamId;
     onStartResumableStream(lastMessage.resumableStreamId);
   }, [messages]);
 
@@ -169,6 +167,11 @@ export const ChatConversation = ({
 
     const unsubscribe = watch.onUpdate(() => {
       const result = watch.localQueryResult();
+      const messages = result?.messages || [];
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.resumableStreamId === lastStreamReceived.current) {
+        return;
+      }
       setMessages(result?.messages || []);
     });
 
@@ -197,7 +200,6 @@ export const ChatConversation = ({
                 m.role === "user" && "ml-auto bg-[#2C2632] rounded-md p-3",
               )}
             >
-              {m.role === "user" && <strong>You:</strong>}
               <ChatMessage content={m.content} />
             </div>
           ))}

@@ -116,7 +116,7 @@ fastify.post("/api/chat/start", async (request, reply) => {
   startOpenAIJob(resumableStreamId, conversationId, messages).catch((err) =>
     console.error(err)
   );
-  return reply.send({ streamId });
+  return reply.send({ ok: true });
 });
 
 fastify.get("/api/chat/stream", async (request, reply) => {
@@ -147,11 +147,11 @@ fastify.get("/api/chat/stream", async (request, reply) => {
 
       if (evt.type === "INIT") continue;
       if (evt.type === "DONE") {
-        res.write(`event: done\ndata: ${JSON.stringify(evt)}\n\n`);
+        res.write(`event: done\ndata: \n\n`);
         continue;
       }
       res.write(
-        `id: ${evt.id}\nevent: message\ndata: ${JSON.stringify(evt)}\n\n`
+        `id: ${evt.id}\nevent: message\ndata: ${evt.text.replace(/\n/g, "\\n")}\n\n`
       );
     }
 
@@ -169,10 +169,10 @@ fastify.get("/api/chat/stream", async (request, reply) => {
       try {
         const evt = JSON.parse(message);
         if (evt.type === "DONE") {
-          res.write(`event: done\ndata: ${JSON.stringify(evt)}\n\n`);
+          res.write(`event: done\ndata: \n\n`);
         } else {
           res.write(
-            `id: ${evt.id}\nevent: message\ndata: ${JSON.stringify(evt)}\n\n`
+            `id: ${evt.id}\nevent: message\ndata: ${evt.text.replace(/\n/g, "\\n")}\n\n`
           );
         }
       } catch (error) {
