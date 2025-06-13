@@ -71,7 +71,7 @@ export const updateConversation = mutation({
 
 export const addNewMessageToConversation = mutation({
   args: {
-    conversationUuid: v.string(),
+    conversationId: v.id("conversations"),
     resumableStreamId: v.optional(v.string()),
     role: v.union(
       v.literal("user"),
@@ -87,20 +87,11 @@ export const addNewMessageToConversation = mutation({
   },
   handler: async (
     ctx,
-    { conversationUuid, status, resumableStreamId, role, content },
+    { conversationId, status, resumableStreamId, role, content },
   ) => {
     const currentDate = new Date().toISOString();
-    const conversation = await ctx.db
-      .query("conversations")
-      .filter((q) => q.eq(q.field("conversationUuid"), conversationUuid))
-      .first();
-
-    if (!conversation) {
-      return;
-    }
-
     const messageId = await ctx.db.insert("messages", {
-      conversationId: conversation._id,
+      conversationId,
       content,
       status,
       resumableStreamId,

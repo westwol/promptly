@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useConvex, useMutation } from "convex/react";
+import { useConvex, useMutation, useQuery } from "convex/react";
 import { v4 as uuidv4 } from "uuid";
 import { api } from "../../../convex/_generated/api";
 
@@ -29,11 +29,17 @@ interface ChatConversationProps {
 export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
   const client = useConvex();
 
+  const conversationData = useQuery(api.conversations.getById, {
+    conversationUuid: conversationId,
+  });
+
   const addMessageToConversation = useMutation(
     api.conversations.addNewMessageToConversation,
   );
 
-  const [messages, setMessages] = useState<Doc<"messages">[]>([]);
+  const [messages, setMessages] = useState<Doc<"messages">[]>(
+    conversationData?.messages || [],
+  );
 
   const [body, setBody] = useState<string>("");
   const isStreamingResponse = useRef<boolean>(false);
@@ -52,8 +58,12 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
   const onSendRequest = async () => {
     const generatedResumableStreamId = uuidv4();
 
+    if (!conversationData) {
+      return;
+    }
+
     addMessageToConversation({
-      conversationUuid: conversationId,
+      conversationId: conversationData?.conversation._id,
       content: body,
       role: "user",
       status: "complete",
@@ -78,7 +88,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        conversationId,
+        conversationId: conversationData?.conversation._id,
         resumableStreamId: generatedResumableStreamId,
         messages: [{ role: "user", content: body }],
       }),
@@ -129,8 +139,6 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
-
-    console.log({ lastMessage });
 
     if (!lastMessage?.resumableStreamId) {
       return;
@@ -185,17 +193,20 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
         style={{ scrollBehavior: "auto" }}
       >
         <div className="text-white flex flex-col gap-2 mx-auto w-full max-w-3xl space-y-12 px-4 pb-10 pt-4 whitespace-pre-wrap break-words">
-          {messages.map((m, i) => (
-            <div
-              key={i}
-              className={clsx(
-                "my-1",
-                m.role === "user" && "ml-auto bg-[#2C2632] rounded-md p-3",
-              )}
-            >
-              <ChatMessage content={m.content} />
-            </div>
-          ))}
+          {messages.map((message, i) =>
+            message.content.length > 0 ? (
+              <div
+                key={i}
+                className={clsx(
+                  "my-1",
+                  message.role === "user" &&
+                    "ml-auto bg-[#2C2632] rounded-md p-3",
+                )}
+              >
+                <ChatMessage content={message.content} />
+              </div>
+            ) : null,
+          )}
           {shouldShowThinkingIndicator && <ThinkingIndicator />}
         </div>
       </div>
