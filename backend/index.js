@@ -92,9 +92,8 @@ async function startOpenAIJob(streamId, conversationId, messages) {
 }
 
 fastify.post("/api/chat/start", async (request, reply) => {
-  const { messages, conversationId } = request.body;
-  const streamId = uuid();
-  startOpenAIJob(streamId, conversationId, messages).catch((err) =>
+  const { messages, conversationId, resumableStreamId } = request.body;
+  startOpenAIJob(resumableStreamId, conversationId, messages).catch((err) =>
     console.error(err),
   );
   return reply.send({ streamId });
