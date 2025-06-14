@@ -58,12 +58,12 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
   const onSendRequest = async () => {
     const generatedResumableStreamId = uuidv4();
 
-    if (!conversationData) {
+    if (!conversationData?.conversation) {
       return;
     }
 
     addMessageToConversation({
-      conversationId: conversationData?.conversation._id,
+      conversationId: conversationData.conversation._id,
       content: body,
       role: "user",
       status: "complete",
@@ -88,7 +88,8 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        conversationId: conversationData?.conversation._id,
+        model: "claude-3-7-sonnet-20250219",
+        conversationId: conversationData?.conversation?._id,
         resumableStreamId: generatedResumableStreamId,
         messages: [{ role: "user", content: body }],
       }),
