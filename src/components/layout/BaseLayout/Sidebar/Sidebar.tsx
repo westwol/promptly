@@ -3,7 +3,7 @@
 import { ChatList } from "./ChatList";
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Activity, Brain, ChevronLeft, ChevronRight } from "lucide-react";
 import { Preloaded } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 
@@ -21,7 +21,11 @@ export const Sidebar = ({ preloadedConversations }: SidebarProps) => {
       }`}
     >
       <div className="flex items-center justify-between p-4">
-        {!isCollapsed && <h1 className="text-white">T3 Chat</h1>}
+        <div className="flex items-center gap-2 text-white">
+          <Brain />
+          <span className="font-bold">T3.chat</span>
+        </div>
+
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="text-white hover:bg-[#2C2632] p-1 rounded"
@@ -34,7 +38,7 @@ export const Sidebar = ({ preloadedConversations }: SidebarProps) => {
         <>
           <div className="px-4">
             <Link
-              className="bg-red-700 w-full p-2 text-xs rounded-sm text-white shadow-xs cursor-pointer block"
+              className="bg-secondary/20 w-full p-2.5 text-sm text-center rounded-md text-white shadow-sm cursor-pointer block font-bold"
               href="/"
             >
               New Chat
