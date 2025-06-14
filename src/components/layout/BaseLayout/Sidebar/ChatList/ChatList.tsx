@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../../../../../../convex/_generated/api";
 import { Doc } from "../../../../../../convex/_generated/dataModel";
 import { useMemo } from "react";
+import { LucideSearch } from "lucide-react";
 
 interface ChatListProps {
   preloadedConversations: Preloaded<typeof api.conversations.get>;
@@ -120,8 +121,13 @@ export const ChatList = ({ preloadedConversations }: ChatListProps) => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <div>
-        <p className="text-white">Search</p>
+      <div className="flex items-center border-b border-chat-border px-3 mb-2">
+        <LucideSearch className="ml-px mr-3 size-4 text-white" />
+        <input
+          role="searchbox"
+          placeholder="Search conversation..."
+          className="w-full bg-transparent py-2 text-white text-sm placeholder-muted-foreground/50 placeholder:select-none focus:outline-none"
+        />
       </div>
       <motion.ul className="flex flex-col gap-2 text-white" layout>
         <AnimatePresence mode="popLayout">
