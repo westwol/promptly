@@ -19,8 +19,13 @@ export const ChatMessageInputPanel = ({ onSendChatRequest }: ChatMessageInputPan
       content: { value: string };
     };
     const content = formElements.content.value;
-    formElements.content.value = '';
+
     onSendChatRequest(content);
+
+    formElements.content.value = '';
+    if (buttonRef.current) {
+      buttonRef.current.disabled = true;
+    }
   };
 
   const onTextareaKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {

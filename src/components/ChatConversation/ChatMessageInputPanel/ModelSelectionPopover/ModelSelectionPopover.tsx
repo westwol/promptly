@@ -70,13 +70,7 @@ export const ModelSelectionPopover = () => {
           >
             {filteredModels.length > 0 ? (
               filteredModels.map((model) => (
-                <ModelLineItem
-                  key={model.model}
-                  name={model.name}
-                  type={model.type as LlmModelType}
-                  description={model.description}
-                  onSelect={() => onSelectModel(model)}
-                />
+                <ModelLineItem key={model.model} {...model} onSelect={() => onSelectModel(model)} />
               ))
             ) : (
               <div className="flex items-center justify-center gap-2">
