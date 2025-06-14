@@ -10,6 +10,8 @@ import { Doc } from "../../../convex/_generated/dataModel";
 import { ThinkingIndicator } from "./ThinkingIndicator/ThinkingIndicator";
 import clsx from "clsx";
 import { ArrowUp } from "lucide-react";
+import { ModelSelectionPopover } from "./ModelSelectionPopover";
+import { usePreferencesStore } from "@t3chat/store/preferences";
 
 const shouldDisplayThinkingIndicator = (messages: Doc<"messages">[]) => {
   if (messages.length === 0) {
@@ -56,6 +58,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
   }, []);
 
   const onSendRequest = async () => {
+    const preferencesStore = usePreferencesStore.getState();
     const generatedResumableStreamId = uuidv4();
 
     if (!conversationData?.conversation) {
@@ -88,7 +91,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "claude-3-7-sonnet-20250219",
+        model: preferencesStore.model.model,
         conversationId: conversationData?.conversation?._id,
         resumableStreamId: generatedResumableStreamId,
         messages: [{ role: "user", content: body }],
@@ -218,6 +221,9 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
           className="w-full resize-none bg-transparent leading-6 text-white outline-none placeholder:text-secondary-foreground/60 disabled:opacity-0"
           placeholder="Type your message here..."
         />
+        <div className="absolute bottom-0 left-10">
+          <ModelSelectionPopover />
+        </div>
         <button
           className="absolute bottom-5 right-5 flex items-center justify-center z-10 w-9 h-9 rounded-md send-button disabled:opacity-70"
           onClick={onSendRequest}

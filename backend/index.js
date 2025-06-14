@@ -24,6 +24,11 @@ const anthropic = new OpenAI({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+const gemini = new OpenAI({
+  baseURL: process.env.GEMINI_BASE_URL,
+  apiKey: process.env.GEMINI_API_KEY,
+});
+
 const redis = new Redis({
   host: process.env.REDIS_HOST,
   port: +process.env.REDIS_PORT,
@@ -91,7 +96,11 @@ async function startLLMJob(
       case "gpt-4":
         completion = await openai.chat.completions.create(completionParams);
         break;
-      case "claude-3-7-sonnet-20250219":
+      case "gemini-2.0-flash":
+      case "gemini-1.5-pro":
+        completion = await gemini.chat.completions.create(completionParams);
+        break;
+      case "claude-sonnet-4-20250514":
         completion = await anthropic.chat.completions.create(completionParams);
         break;
       case "deepseek-chat":
