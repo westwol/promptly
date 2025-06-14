@@ -4,6 +4,7 @@ import OpenAI from "openai";
 import Redis from "ioredis";
 import dotenv from "dotenv";
 import { ConvexHttpClient } from "convex/browser";
+
 dotenv.config();
 
 const fastify = Fastify({ logger: true });
@@ -12,8 +13,18 @@ await fastify.register(cors, { origin: true });
 const client = new ConvexHttpClient(process.env.CONVEX_URL);
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+const deepseek = new OpenAI({
+  baseURL: process.env.DEEPSEEK_BASE_URL,
+  apiKey: process.env.DEEPSEEK_API_KEY,
+});
+
+const anthropic = new OpenAI({
+  baseURL: process.env.ANTHROPIC_BASE_URL,
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
 const redis = new Redis({
-  // for Lists & Hashes
   host: process.env.REDIS_HOST,
   port: +process.env.REDIS_PORT,
 });
@@ -39,7 +50,12 @@ async function generateConversationTitle(conversationId, content) {
   });
 }
 
-async function startOpenAIJob(streamId, conversationId, messages) {
+async function startLLMJob(
+  streamId,
+  conversationId,
+  messages,
+  model = "gpt-3.5-turbo"
+) {
   try {
     // Initialize stream
     await redis.lpush(`chat:${streamId}`, JSON.stringify({ type: "INIT" }));
@@ -52,27 +68,48 @@ async function startOpenAIJob(streamId, conversationId, messages) {
         role: "assistant",
         status: "streaming",
         content: "",
-      },
+      }
     );
 
     const shouldGenerateTitle = messages.length === 1;
     if (shouldGenerateTitle) {
       generateConversationTitle(conversationId, messages[0].content).catch(
-        (err) => console.error("Title generation failed:", err),
+        (err) => console.error("Title generation failed:", err)
       );
     }
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+    let completion;
+
+    const completionParams = {
+      model,
       messages,
       stream: true,
-    });
+    };
+
+    switch (model) {
+      case "gpt-3.5-turbo":
+      case "gpt-4":
+        completion = await openai.chat.completions.create(completionParams);
+        break;
+      case "claude-3-7-sonnet-20250219":
+        completion = await anthropic.chat.completions.create(completionParams);
+        break;
+      case "deepseek-chat":
+      case "deepseek-coder":
+        completion = await deepseek.chat.completions.create(completionParams);
+        break;
+      default:
+        throw new Error(`Unsupported model: ${model}`);
+    }
 
     let idx = 0;
     let fullContent = "";
 
     for await (const chunk of completion) {
-      const text = chunk.choices?.[0]?.delta?.content;
+      let text;
+
+      text = chunk.choices?.[0]?.delta?.content;
+
       if (!text) continue;
 
       fullContent += text;
@@ -111,9 +148,14 @@ async function startOpenAIJob(streamId, conversationId, messages) {
 }
 
 fastify.post("/api/chat/start", async (request, reply) => {
-  const { messages, conversationId, resumableStreamId } = request.body;
-  startOpenAIJob(resumableStreamId, conversationId, messages).catch((err) =>
-    console.error(err),
+  const {
+    messages,
+    conversationId,
+    resumableStreamId,
+    model = "gpt-3.5-turbo",
+  } = request.body;
+  startLLMJob(resumableStreamId, conversationId, messages, model).catch((err) =>
+    console.error(err)
   );
   return reply.send({ ok: true });
 });
@@ -150,7 +192,7 @@ fastify.get("/api/chat/stream", async (request, reply) => {
         continue;
       }
       res.write(
-        `id: ${evt.id}\nevent: message\ndata: ${evt.text.replace(/\n/g, "\\n")}\n\n`,
+        `id: ${evt.id}\nevent: message\ndata: ${evt.text.replace(/\n/g, "\\n")}\n\n`
       );
     }
 
@@ -171,7 +213,7 @@ fastify.get("/api/chat/stream", async (request, reply) => {
           res.write(`event: done\ndata: \n\n`);
         } else {
           res.write(
-            `id: ${evt.id}\nevent: message\ndata: ${evt.text.replace(/\n/g, "\\n")}\n\n`,
+            `id: ${evt.id}\nevent: message\ndata: ${evt.text.replace(/\n/g, "\\n")}\n\n`
           );
         }
       } catch (error) {
@@ -189,7 +231,7 @@ fastify.get("/api/chat/stream", async (request, reply) => {
     console.error("Stream setup error:", error);
     if (isClientConnected) {
       res.write(
-        `event: error\ndata: ${JSON.stringify({ message: "Internal server error" })}\n\n`,
+        `event: error\ndata: ${JSON.stringify({ message: "Internal server error" })}\n\n`
       );
       res.end();
     }
