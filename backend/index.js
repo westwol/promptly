@@ -1,6 +1,5 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import { v4 as uuid } from "uuid";
 import OpenAI from "openai";
 import Redis from "ioredis";
 import dotenv from "dotenv";
@@ -53,13 +52,13 @@ async function startOpenAIJob(streamId, conversationId, messages) {
         role: "assistant",
         status: "streaming",
         content: "",
-      }
+      },
     );
 
     const shouldGenerateTitle = messages.length === 1;
     if (shouldGenerateTitle) {
       generateConversationTitle(conversationId, messages[0].content).catch(
-        (err) => console.error("Title generation failed:", err)
+        (err) => console.error("Title generation failed:", err),
       );
     }
 
@@ -114,7 +113,7 @@ async function startOpenAIJob(streamId, conversationId, messages) {
 fastify.post("/api/chat/start", async (request, reply) => {
   const { messages, conversationId, resumableStreamId } = request.body;
   startOpenAIJob(resumableStreamId, conversationId, messages).catch((err) =>
-    console.error(err)
+    console.error(err),
   );
   return reply.send({ ok: true });
 });
@@ -151,7 +150,7 @@ fastify.get("/api/chat/stream", async (request, reply) => {
         continue;
       }
       res.write(
-        `id: ${evt.id}\nevent: message\ndata: ${evt.text.replace(/\n/g, "\\n")}\n\n`
+        `id: ${evt.id}\nevent: message\ndata: ${evt.text.replace(/\n/g, "\\n")}\n\n`,
       );
     }
 
@@ -172,7 +171,7 @@ fastify.get("/api/chat/stream", async (request, reply) => {
           res.write(`event: done\ndata: \n\n`);
         } else {
           res.write(
-            `id: ${evt.id}\nevent: message\ndata: ${evt.text.replace(/\n/g, "\\n")}\n\n`
+            `id: ${evt.id}\nevent: message\ndata: ${evt.text.replace(/\n/g, "\\n")}\n\n`,
           );
         }
       } catch (error) {
@@ -190,7 +189,7 @@ fastify.get("/api/chat/stream", async (request, reply) => {
     console.error("Stream setup error:", error);
     if (isClientConnected) {
       res.write(
-        `event: error\ndata: ${JSON.stringify({ message: "Internal server error" })}\n\n`
+        `event: error\ndata: ${JSON.stringify({ message: "Internal server error" })}\n\n`,
       );
       res.end();
     }

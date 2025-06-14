@@ -17,7 +17,7 @@ export const getById = query({
       .first();
 
     if (!conversation) {
-      throw new Error(`Conversation with id ${conversationUuid} not found`);
+      return { conversation: undefined, messages: [] };
     }
 
     const messages = await ctx.db
