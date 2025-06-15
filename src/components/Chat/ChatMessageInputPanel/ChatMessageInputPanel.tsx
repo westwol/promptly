@@ -8,6 +8,7 @@ import { ChatTextArea } from './ChatTextArea';
 import { UploadChatAttachments } from './UploadChatAttachments';
 import { WebSearchToggle } from './WebSearchToogle';
 import { ChatSubmitButton } from './ChatSubmitButton/ChatSubmitButton';
+import { ReasoningToggle } from './ReasoningToggle';
 
 interface ChatMessageInputPanelProps {
   onSendChatRequest: () => void;
@@ -23,7 +24,7 @@ export const ChatMessageInputPanel = ({ onSendChatRequest }: ChatMessageInputPan
 
   return (
     <form
-      className="text-secondary-foreground relative mx-auto flex w-full flex-col items-stretch gap-2 rounded-t-xl bg-[#2C2632] px-3 pt-3 max-sm:pb-6 sm:max-w-3xl"
+      className="text-secondary-foreground relative mx-auto flex w-full flex-col items-stretch gap-2 rounded-t-xl bg-[#1F252E] px-3 pt-3 max-sm:pb-6 sm:max-w-3xl"
       onSubmit={onSubmitRequest}
     >
       <PendingChatAttachments />
@@ -32,6 +33,7 @@ export const ChatMessageInputPanel = ({ onSendChatRequest }: ChatMessageInputPan
         <ModelSelectionPopover />
         {currentModel.capabilities.includes('vision') && <UploadChatAttachments />}
         {currentModel.capabilities.includes('web') && <WebSearchToggle />}
+        {currentModel.capabilities.includes('reasoning') && <ReasoningToggle />}
       </div>
       <ChatSubmitButton />
     </form>

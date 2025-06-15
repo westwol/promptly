@@ -142,7 +142,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       return;
     }
 
-    if (lastMessage.resumableStreamId === lastStreamReceived.current) {
+    if (lastMessage?.resumableStreamId === lastStreamReceived.current) {
       return;
     }
 
@@ -167,7 +167,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       const result = watch.localQueryResult();
       const messages = result?.messages || [];
       const lastMessage = messages[messages.length - 1];
-      if (lastMessage.resumableStreamId === lastStreamReceived.current) {
+      if (lastMessage?.resumableStreamId === lastStreamReceived.current) {
         return;
       }
       setMessages(result?.messages || []);
