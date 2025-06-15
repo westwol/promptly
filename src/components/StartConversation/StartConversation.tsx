@@ -1,32 +1,35 @@
-"use client";
+'use client';
 
-import { useRef, useState } from "react";
-import { useMutation } from "convex/react";
-import { v4 as uuidv4 } from "uuid";
-import { ArrowUp } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRef, useState } from 'react';
+import { useMutation } from 'convex/react';
+import { v4 as uuidv4 } from 'uuid';
+import { ArrowUp } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
-import { api } from "../../../convex/_generated/api";
-import { Doc } from "../../../convex/_generated/dataModel";
+import { api } from '../../../convex/_generated/api';
+import { Doc } from '../../../convex/_generated/dataModel';
+import { useSessionStore } from '@t3chat/store/session';
 
 export const StartConversation = () => {
+  const sessionId = useSessionStore((state) => state.sessionId);
+
   const createInitialConversation = useMutation(
-    api.conversations.createInitialConversation,
+    api.conversations.createInitialConversation
   ).withOptimisticUpdate((localStore, args) => {
     const { conversationId, content } = args;
-    const currentValue = localStore.getQuery(api.conversations.get);
+    const currentValue = localStore.getQuery(api.conversations.get, { sessionId });
     if (currentValue !== undefined) {
       const currentDate = new Date().toISOString();
       /* @ts-expect error aosdka */
       const dummyConversation = {
-        _id: "some-dummy-id",
-        userId: "jh7abgx9czyf0es24jgnbyxgmd7hjwsr",
-        title: "",
+        _id: 'some-dummy-id',
+        title: '',
+        userId: sessionId,
         conversationUuid: conversationId,
         updatedAt: currentDate,
         createdAt: currentDate,
-      } as Doc<"conversations">;
-      localStore.setQuery(api.conversations.get, {}, [
+      } as Doc<'conversations'>;
+      localStore.setQuery(api.conversations.get, { sessionId }, [
         dummyConversation,
         ...currentValue,
       ]);
@@ -36,14 +39,14 @@ export const StartConversation = () => {
         {
           conversation: dummyConversation,
           /* @ts-expect-error oks */
-          messages: [{ role: "user", content }],
-        },
+          messages: [{ role: 'user', content }],
+        }
       );
     }
   });
 
   const router = useRouter();
-  const [body, setBody] = useState<string>("");
+  const [body, setBody] = useState<string>('');
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const onSendRequest = async () => {
@@ -55,33 +58,30 @@ export const StartConversation = () => {
     const conversationId = await createInitialConversation({
       conversationId: generatedConversationId,
       content: body,
+      sessionId,
     });
 
-    fetch("http://localhost:4000/api/chat/start", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    fetch('http://localhost:4000/api/chat/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         conversationId,
         resumableStreamId: generatedResumableStreamId,
-        messages: [{ role: "user", content: body }],
+        messages: [{ role: 'user', content: body }],
       }),
     });
   };
 
   return (
-    <div className="grid grid-rows-[1fr_100px] h-screen">
-      <div
-        className="overflow-auto"
-        ref={messagesContainerRef}
-        style={{ scrollBehavior: "auto" }}
-      >
-        <div className="text-white flex flex-col gap-2 mx-auto w-full max-w-3xl space-y-12 px-4 pb-10 pt-4 whitespace-pre-wrap break-words">
+    <div className="grid h-screen grid-rows-[1fr_100px]">
+      <div className="overflow-auto" ref={messagesContainerRef} style={{ scrollBehavior: 'auto' }}>
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 space-y-12 px-4 pt-4 pb-10 break-words whitespace-pre-wrap text-white">
           <div className="flex h-[calc(100vh-20rem)] items-start justify-center">
-            <div className="w-full space-y-6 px-2 pt-[calc(max(15vh,2.5rem))] duration-300 animate-in fade-in-50 zoom-in-95 sm:px-8">
+            <div className="animate-in fade-in-50 zoom-in-95 w-full space-y-6 px-2 pt-[calc(max(15vh,2.5rem))] duration-300 sm:px-8">
               <h2 className="text-3xl font-semibold">How can I help you?</h2>
               <div className="flex flex-row flex-wrap gap-2.5 text-sm max-sm:justify-evenly">
                 <button
-                  className="justify-center whitespace-nowrap text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border-reflect button-reflect bg-[rgb(162,59,103)] p-2 text-primary-foreground shadow hover:bg-[#d56698] active:bg-[rgb(162,59,103)] disabled:hover:bg-[rgb(162,59,103)] disabled:active:bg-[rgb(162,59,103)] dark:bg-primary/20 dark:hover:bg-pink-800/70 dark:active:bg-pink-800/40 disabled:dark:hover:bg-primary/20 disabled:dark:active:bg-primary/20 h-9 flex items-center gap-1 rounded-xl px-5 py-2 font-semibold outline-1 outline-secondary/70 backdrop-blur-xl data-[selected=false]:bg-secondary/30 data-[selected=false]:text-secondary-foreground/90 data-[selected=false]:outline data-[selected=false]:hover:bg-secondary max-sm:size-16 max-sm:flex-col sm:gap-2 sm:rounded-full"
+                  className="focus-visible:ring-ring [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border-reflect button-reflect text-primary-foreground dark:bg-primary/20 disabled:dark:hover:bg-primary/20 disabled:dark:active:bg-primary/20 outline-secondary/70 data-[selected=false]:bg-secondary/30 data-[selected=false]:text-secondary-foreground/90 data-[selected=false]:hover:bg-secondary flex h-9 items-center justify-center gap-1 rounded-xl bg-[rgb(162,59,103)] p-2 px-5 py-2 text-sm font-semibold whitespace-nowrap shadow outline-1 backdrop-blur-xl transition-colors hover:bg-[#d56698] focus-visible:ring-1 focus-visible:outline-none active:bg-[rgb(162,59,103)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[rgb(162,59,103)] disabled:active:bg-[rgb(162,59,103)] data-[selected=false]:outline max-sm:size-16 max-sm:flex-col sm:gap-2 sm:rounded-full dark:hover:bg-pink-800/70 dark:active:bg-pink-800/40"
                   data-selected="true"
                 >
                   <svg
@@ -105,7 +105,7 @@ export const StartConversation = () => {
                   <div>Create</div>
                 </button>
                 <button
-                  className="justify-center whitespace-nowrap text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-pink-600/90 disabled:hover:bg-primary h-9 flex items-center gap-1 rounded-xl px-5 py-2 font-semibold outline-1 outline-secondary/70 backdrop-blur-xl data-[selected=false]:bg-secondary/30 data-[selected=false]:text-secondary-foreground/90 data-[selected=false]:outline data-[selected=false]:hover:bg-secondary max-sm:size-16 max-sm:flex-col sm:gap-2 sm:rounded-full"
+                  className="focus-visible:ring-ring [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 bg-primary text-primary-foreground disabled:hover:bg-primary outline-secondary/70 data-[selected=false]:bg-secondary/30 data-[selected=false]:text-secondary-foreground/90 data-[selected=false]:hover:bg-secondary flex h-9 items-center justify-center gap-1 rounded-xl px-5 py-2 text-sm font-semibold whitespace-nowrap shadow outline-1 backdrop-blur-xl transition-colors hover:bg-pink-600/90 focus-visible:ring-1 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[selected=false]:outline max-sm:size-16 max-sm:flex-col sm:gap-2 sm:rounded-full"
                   data-selected="false"
                 >
                   <svg
@@ -128,7 +128,7 @@ export const StartConversation = () => {
                   <div>Explore</div>
                 </button>
                 <button
-                  className="justify-center whitespace-nowrap text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-pink-600/90 disabled:hover:bg-primary h-9 flex items-center gap-1 rounded-xl px-5 py-2 font-semibold outline-1 outline-secondary/70 backdrop-blur-xl data-[selected=false]:bg-secondary/30 data-[selected=false]:text-secondary-foreground/90 data-[selected=false]:outline data-[selected=false]:hover:bg-secondary max-sm:size-16 max-sm:flex-col sm:gap-2 sm:rounded-full"
+                  className="focus-visible:ring-ring [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 bg-primary text-primary-foreground disabled:hover:bg-primary outline-secondary/70 data-[selected=false]:bg-secondary/30 data-[selected=false]:text-secondary-foreground/90 data-[selected=false]:hover:bg-secondary flex h-9 items-center justify-center gap-1 rounded-xl px-5 py-2 text-sm font-semibold whitespace-nowrap shadow outline-1 backdrop-blur-xl transition-colors hover:bg-pink-600/90 focus-visible:ring-1 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[selected=false]:outline max-sm:size-16 max-sm:flex-col sm:gap-2 sm:rounded-full"
                   data-selected="false"
                 >
                   <svg
@@ -149,7 +149,7 @@ export const StartConversation = () => {
                   <div>Code</div>
                 </button>
                 <button
-                  className="justify-center whitespace-nowrap text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-pink-600/90 disabled:hover:bg-primary h-9 flex items-center gap-1 rounded-xl px-5 py-2 font-semibold outline-1 outline-secondary/70 backdrop-blur-xl data-[selected=false]:bg-secondary/30 data-[selected=false]:text-secondary-foreground/90 data-[selected=false]:outline data-[selected=false]:hover:bg-secondary max-sm:size-16 max-sm:flex-col sm:gap-2 sm:rounded-full"
+                  className="focus-visible:ring-ring [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 bg-primary text-primary-foreground disabled:hover:bg-primary outline-secondary/70 data-[selected=false]:bg-secondary/30 data-[selected=false]:text-secondary-foreground/90 data-[selected=false]:hover:bg-secondary flex h-9 items-center justify-center gap-1 rounded-xl px-5 py-2 text-sm font-semibold whitespace-nowrap shadow outline-1 backdrop-blur-xl transition-colors hover:bg-pink-600/90 focus-visible:ring-1 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[selected=false]:outline max-sm:size-16 max-sm:flex-col sm:gap-2 sm:rounded-full"
                   data-selected="false"
                 >
                   <svg
@@ -171,35 +171,27 @@ export const StartConversation = () => {
                   <div>Learn</div>
                 </button>
               </div>
-              <div className="flex flex-col text-foreground">
-                <div className="flex items-start gap-2 border-t border-secondary/20 py-1 first:border-none">
-                  <button className="w-full rounded-md py-2 text-left text-secondary-foreground hover:bg-secondary/50 sm:px-3">
+              <div className="text-foreground flex flex-col">
+                <div className="border-secondary/20 flex items-start gap-2 border-t py-1 first:border-none">
+                  <button className="text-secondary-foreground hover:bg-secondary/50 w-full rounded-md py-2 text-left sm:px-3">
+                    <span>Write a short story about a robot discovering emotions</span>
+                  </button>
+                </div>
+                <div className="border-secondary/20 flex items-start gap-2 border-t py-1 first:border-none">
+                  <button className="text-secondary-foreground hover:bg-secondary/50 w-full rounded-md py-2 text-left sm:px-3">
+                    <span>Help me outline a sci-fi novel set in a post-apocalyptic world</span>
+                  </button>
+                </div>
+                <div className="border-secondary/20 flex items-start gap-2 border-t py-1 first:border-none">
+                  <button className="text-secondary-foreground hover:bg-secondary/50 w-full rounded-md py-2 text-left sm:px-3">
                     <span>
-                      Write a short story about a robot discovering emotions
+                      Create a character profile for a complex villain with sympathetic motives
                     </span>
                   </button>
                 </div>
-                <div className="flex items-start gap-2 border-t border-secondary/20 py-1 first:border-none">
-                  <button className="w-full rounded-md py-2 text-left text-secondary-foreground hover:bg-secondary/50 sm:px-3">
-                    <span>
-                      Help me outline a sci-fi novel set in a post-apocalyptic
-                      world
-                    </span>
-                  </button>
-                </div>
-                <div className="flex items-start gap-2 border-t border-secondary/20 py-1 first:border-none">
-                  <button className="w-full rounded-md py-2 text-left text-secondary-foreground hover:bg-secondary/50 sm:px-3">
-                    <span>
-                      Create a character profile for a complex villain with
-                      sympathetic motives
-                    </span>
-                  </button>
-                </div>
-                <div className="flex items-start gap-2 border-t border-secondary/20 py-1 first:border-none">
-                  <button className="w-full rounded-md py-2 text-left text-secondary-foreground hover:bg-secondary/50 sm:px-3">
-                    <span>
-                      Give me 5 creative writing prompts for flash fiction
-                    </span>
+                <div className="border-secondary/20 flex items-start gap-2 border-t py-1 first:border-none">
+                  <button className="text-secondary-foreground hover:bg-secondary/50 w-full rounded-md py-2 text-left sm:px-3">
+                    <span>Give me 5 creative writing prompts for flash fiction</span>
                   </button>
                 </div>
               </div>
@@ -207,15 +199,15 @@ export const StartConversation = () => {
           </div>
         </div>
       </div>
-      <div className="relative mx-auto flex w-full flex-col items-stretch gap-2 rounded-t-xl bg-[#2C2632] px-3 pt-3 text-secondary-foreground max-sm:pb-6 sm:max-w-3xl">
+      <div className="text-secondary-foreground relative mx-auto flex w-full flex-col items-stretch gap-2 rounded-t-xl bg-[#2C2632] px-3 pt-3 max-sm:pb-6 sm:max-w-3xl">
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          className="w-full resize-none bg-transparent leading-6 text-white outline-none placeholder:text-secondary-foreground/60 disabled:opacity-0"
+          className="placeholder:text-secondary-foreground/60 w-full resize-none bg-transparent leading-6 text-white outline-none disabled:opacity-0"
           placeholder="Type your message here..."
         />
         <button
-          className="absolute bottom-5 right-5 flex items-center justify-center z-10 w-9 h-9 rounded-md send-button disabled:opacity-70"
+          className="send-button absolute right-5 bottom-5 z-10 flex h-9 w-9 items-center justify-center rounded-md disabled:opacity-70"
           onClick={onSendRequest}
           disabled={body.length === 0}
         >

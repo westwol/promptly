@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Preloaded, usePreloadedQuery } from "convex/react";
-import { isToday, isYesterday, isThisWeek } from "date-fns";
-import { motion, AnimatePresence } from "framer-motion";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Preloaded, usePreloadedQuery } from 'convex/react';
+import { isToday, isYesterday, isThisWeek } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 
-import { api } from "../../../../../../convex/_generated/api";
-import { Doc } from "../../../../../../convex/_generated/dataModel";
-import { useMemo } from "react";
-import { LucideSearch } from "lucide-react";
+import { api } from '../../../../../../convex/_generated/api';
+import { Doc } from '../../../../../../convex/_generated/dataModel';
+import { useMemo } from 'react';
+import { LucideSearch } from 'lucide-react';
 
 interface ChatListProps {
   preloadedConversations: Preloaded<typeof api.conversations.get>;
@@ -22,7 +22,7 @@ export const ChatList = ({ preloadedConversations }: ChatListProps) => {
   const groupedConversations = useMemo(() => {
     const currentConversations = conversations || [];
     return currentConversations.reduce(
-      (groups: Record<string, Doc<"conversations">[]>, conversation) => {
+      (groups: Record<string, Doc<'conversations'>[]>, conversation) => {
         const date = new Date(conversation.updatedAt);
         switch (true) {
           case isToday(date):
@@ -44,11 +44,11 @@ export const ChatList = ({ preloadedConversations }: ChatListProps) => {
         yesterday: [],
         last7Days: [],
         older: [],
-      },
+      }
     );
   }, [conversations]);
 
-  const renderGroup = (label: string, group: Doc<"conversations">[]) =>
+  const renderGroup = (label: string, group: Doc<'conversations'>[]) =>
     group.length > 0 && (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -56,11 +56,10 @@ export const ChatList = ({ preloadedConversations }: ChatListProps) => {
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.2 }}
       >
-        <p className="text-pink-400 mt-4 mb-2">{label}</p>
+        <p className="mt-4 mb-2 text-pink-400">{label}</p>
         <AnimatePresence mode="popLayout">
           {group.map((conversation) => {
-            const isSelected =
-              pathname === `/conversations/${conversation.conversationUuid}`;
+            const isSelected = pathname === `/conversations/${conversation.conversationUuid}`;
 
             const shouldShowLoadingIndicator = conversation.title.length === 0;
 
@@ -76,17 +75,17 @@ export const ChatList = ({ preloadedConversations }: ChatListProps) => {
                 whileTap={{ scale: 0.98 }}
               >
                 <Link
-                  className={`p-2 rounded-sm text-sm flex justify-between ${
-                    isSelected ? "bg-[#2C2632]" : "hover:bg-[#2C2632]"
+                  className={`flex justify-between rounded-sm p-2 text-sm ${
+                    isSelected ? 'bg-[#2C2632]' : 'hover:bg-[#2C2632]'
                   }`}
                   href={`/conversations/${conversation.conversationUuid}`}
                   prefetch={true}
                 >
-                  {conversation.title || "New conversation"}
+                  {conversation.title || 'New conversation'}
                   {shouldShowLoadingIndicator && (
                     <motion.svg
                       aria-hidden="true"
-                      className="w-4 h-4 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                      className="h-4 w-4 animate-spin fill-blue-600 text-gray-200 dark:text-gray-600"
                       viewBox="0 0 100 101"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
@@ -94,7 +93,7 @@ export const ChatList = ({ preloadedConversations }: ChatListProps) => {
                       transition={{
                         duration: 1,
                         repeat: Infinity,
-                        ease: "linear",
+                        ease: 'linear',
                       }}
                     >
                       <path
@@ -116,17 +115,13 @@ export const ChatList = ({ preloadedConversations }: ChatListProps) => {
     );
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="flex items-center border-b border-chat-border px-3 mb-2">
-        <LucideSearch className="ml-px mr-3 size-4 text-white" />
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+      <div className="border-chat-border mb-2 flex items-center border-b px-3">
+        <LucideSearch className="mr-3 ml-px size-4 text-white" />
         <input
           role="searchbox"
           placeholder="Search conversation..."
-          className="w-full bg-transparent py-2 text-white text-sm placeholder-muted-foreground/50 placeholder:select-none focus:outline-none"
+          className="placeholder-muted-foreground/50 w-full bg-transparent py-2 text-sm text-white placeholder:select-none focus:outline-none"
         />
       </div>
       <motion.ul className="flex flex-col gap-2 text-white" layout>
