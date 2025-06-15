@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 :root {
   --background: #ffffff;
@@ -34,18 +34,14 @@ body {
 }
 
 @theme {
-  --color-primary: hsla(324, 20%, 10%, 1);
-  --color-secondary: hsla(332 100% 20%);
+  --color-primary: #17191a;
+  --color-secondary: #1d2126;
+  --color-tertiary: #20232b;
 }
 
 .send-button {
   border-radius: 0.5rem;
-  background-color: rgba(157, 23, 77, 0.45);
-  box-shadow:
-    var(--tw-ring-offset-shadow, 0 0 #0000),
-    var(--tw-ring-shadow, 0 0 #0000),
-    0 1px 3px 0 rgba(0, 0, 0, 0.1),
-    0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  background-color: var(--color-primary);
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 0.15s;
   cursor: pointer;

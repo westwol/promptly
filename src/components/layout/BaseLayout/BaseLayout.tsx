@@ -20,12 +20,12 @@ export const BaseLayout = ({
 }: PropsWithChildren<BaseLayoutProps>) => {
   return (
     <ResizablePanelGroup direction="horizontal">
-      <ResizablePanel defaultSize={20} minSize={15} maxSize={50}>
+      <ResizablePanel defaultSize={17} minSize={17} maxSize={50}>
         <Sidebar preloadedConversations={preloadedConversations} />
       </ResizablePanel>
       <ResizableHandle className="border-0 bg-transparent" withHandle />
       <ResizablePanel defaultSize={80}>
-        <div className="h-screen overflow-auto bg-[#221D27]">{children}</div>
+        <div className="bg-secondary h-screen overflow-auto">{children}</div>
       </ResizablePanel>
     </ResizablePanelGroup>
   );

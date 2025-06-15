@@ -7,6 +7,7 @@ export default defineSchema({
     conversationUuid: v.string(), // Conversation uuid
     title: v.string(), // Optional title for group chats or AI context label
     processing: v.boolean(), // Track when a conversation is generating a message
+    pinned: v.boolean(), // Track when a conversation is pinned
     createdAt: v.string(), // When the conversation was started
     updatedAt: v.string(), // Last update time
   }).index('by_user_id', ['userId']),

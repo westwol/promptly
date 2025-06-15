@@ -58,6 +58,7 @@ export const createInitialConversation = mutation({
       title: '',
       userId,
       conversationUuid: conversationId,
+      pinned: false,
       processing: true,
       updatedAt: currentDate,
       createdAt: currentDate,

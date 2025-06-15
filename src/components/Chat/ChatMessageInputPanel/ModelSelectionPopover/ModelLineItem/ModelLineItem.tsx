@@ -19,9 +19,7 @@ export const ModelLineItem = ({
 }: ModelLineItemsProps) => (
   <div
     role="menuitem"
-    className="[&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 group hover:bg-secondary/20 relative flex cursor-default flex-col items-start gap-1 rounded-sm p-3 text-sm transition-colors duration-100 outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-    data-orientation="vertical"
-    data-radix-collection-item=""
+    className="[&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 group hover:bg-tertiary relative flex cursor-default flex-col items-start gap-1 rounded-sm p-3 text-sm transition-colors duration-100 outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
     onClick={onSelect}
   >
     <div className="flex w-full items-center justify-between">
@@ -31,7 +29,7 @@ export const ModelLineItem = ({
         <Tooltip.Root>
           <Tooltip.Trigger>
             <div>
-              <LucideInfo className="h-4 w-4" color="var(--color-secondary)" />
+              <LucideInfo className="h-4 w-4 text-gray-400" />
             </div>
           </Tooltip.Trigger>
           <Tooltip.Content>

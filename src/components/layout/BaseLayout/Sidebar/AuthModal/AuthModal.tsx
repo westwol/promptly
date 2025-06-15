@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { SignedIn, SignedOut, useAuth, useSignIn, useClerk } from '@clerk/nextjs';
+import { useAuth, useSignIn, useClerk } from '@clerk/nextjs';
 
 import { Dialog } from '@t3chat/components/ui';
 import { GoogleIcon } from '@t3chat/icons';

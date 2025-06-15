@@ -5,17 +5,10 @@ import { omit } from 'lodash';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter, SyntaxHighlighterProps } from 'react-syntax-highlighter';
-import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-// Custom style overrides for atomDark
 const THEME_HIGHLIGHT_STYLES: SyntaxHighlighterProps['style'] = {
-  ...atomDark,
-  comment: { color: '#a195c7', fontStyle: 'italic' },
-  keyword: { color: '#c792ea', fontWeight: 'bold' },
-  function: { color: '#82aaff' },
-  string: { color: '#ecc48d' },
-  number: { color: '#f78c6c' },
-  variable: { color: '#addb67' },
+  ...vscDarkPlus,
 };
 
 const CONTAINER_STYLES = {
@@ -50,7 +43,7 @@ function getExtension(lang: string) {
 
 export const ChatMessage = React.memo(({ content, role }: Doc<'messages'>) => {
   return (
-    <div className={cn('my-1', role === 'user' && 'ml-auto rounded-md bg-[#2C2632] p-3')}>
+    <div className={cn('my-1', role === 'user' && 'bg-primary ml-auto rounded-md p-3')}>
       <ReactMarkdown
         components={{
           ul: ({ children }) => <ul className="list-disc p-0 marker:text-gray-400">{children}</ul>,
@@ -81,7 +74,7 @@ export const ChatMessage = React.memo(({ content, role }: Doc<'messages'>) => {
 
             return match ? (
               <div className="relative">
-                <div className="flex items-center justify-between rounded-t-lg bg-[#28213c] px-4 py-2">
+                <div className="bg-tertiary flex items-center justify-between rounded-t-lg px-4 py-2">
                   <span className="text-xs tracking-wide text-gray-300 lowercase">{lang}</span>
                   <div className="flex items-center gap-2">
                     {/* Download icon */}
