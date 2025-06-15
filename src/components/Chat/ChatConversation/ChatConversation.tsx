@@ -7,12 +7,11 @@ import clsx from 'clsx';
 
 import { usePreferencesStore } from '@t3chat/store/preferences';
 
-import { ChatMessage } from './ChatMessage/ChatMessage';
-
+import { ChatMessage } from './ChatMessage';
 import { ThinkingIndicator } from './ThinkingIndicator/ThinkingIndicator';
-import { ChatMessageInputPanel } from './ChatMessageInputPanel';
-import { api } from '../../../convex/_generated/api';
-import { Doc } from '../../../convex/_generated/dataModel';
+import { ChatMessageInputPanel } from '../ChatMessageInputPanel';
+import { api } from '../../../../convex/_generated/api';
+import { Doc } from '../../../../convex/_generated/dataModel';
 
 const shouldDisplayThinkingIndicator = (messages: Doc<'messages'>[]) => {
   if (messages.length === 0) {
