@@ -12,6 +12,7 @@ import { ThinkingIndicator } from './ThinkingIndicator/ThinkingIndicator';
 import { ChatMessageInputPanel } from '../ChatMessageInputPanel';
 import { api } from '../../../../convex/_generated/api';
 import { Doc } from '../../../../convex/_generated/dataModel';
+import { startChat } from '@t3chat/utils/api';
 
 const shouldDisplayThinkingIndicator = (messages: Doc<'messages'>[]) => {
   if (messages.length === 0) {
@@ -81,19 +82,14 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       } as Doc<'messages'>,
     ]);
 
-    const formData = new FormData();
-    formData.append('messages', JSON.stringify([{ role: 'user', content }]));
-    formData.append('conversationId', conversationData.conversation._id);
-    formData.append('resumableStreamId', generatedResumableStreamId);
-    formData.append('model', preferencesStore.model.model);
+    console.log({ imageFile });
 
-    if (imageFile) {
-      formData.append('image', imageFile);
-    }
-
-    fetch('http://localhost:4000/api/chat/start', {
-      method: 'POST',
-      body: formData,
+    startChat({
+      content,
+      conversationId: conversationData.conversation._id,
+      resumableStreamId: generatedResumableStreamId,
+      model: preferencesStore.model.model,
+      image: imageFile,
     });
   };
 
