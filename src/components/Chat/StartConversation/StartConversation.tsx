@@ -1,14 +1,15 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useMutation } from 'convex/react';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowUp, Code, GraduationCap, Newspaper, Sparkles } from 'lucide-react';
+import { Code, GraduationCap, Newspaper, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-import { api } from '../../../convex/_generated/api';
-import { Doc } from '../../../convex/_generated/dataModel';
 import { useSessionStore } from '@t3chat/store/session';
+import { api } from '../../../../convex/_generated/api';
+import { Doc } from '../../../../convex/_generated/dataModel';
+import { ChatMessageInputPanel } from '../ChatMessageInputPanel';
 
 export const StartConversation = () => {
   const sessionId = useSessionStore((state) => state.sessionId);
@@ -46,10 +47,9 @@ export const StartConversation = () => {
   });
 
   const router = useRouter();
-  const [body, setBody] = useState<string>('');
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const onSendRequest = async () => {
+  const onSendRequest = async (content: string) => {
     const generatedConversationId = uuidv4();
     const generatedResumableStreamId = uuidv4();
 
@@ -57,7 +57,7 @@ export const StartConversation = () => {
 
     const conversationId = await createInitialConversation({
       conversationId: generatedConversationId,
-      content: body,
+      content,
       sessionId,
     });
 
@@ -67,7 +67,7 @@ export const StartConversation = () => {
       body: JSON.stringify({
         conversationId,
         resumableStreamId: generatedResumableStreamId,
-        messages: [{ role: 'user', content: body }],
+        messages: [{ role: 'user', content }],
       }),
     });
   };
@@ -137,21 +137,7 @@ export const StartConversation = () => {
           </div>
         </div>
       </div>
-      <div className="text-secondary-foreground relative mx-auto flex w-full flex-col items-stretch gap-2 rounded-t-xl bg-[#2C2632] px-3 pt-3 max-sm:pb-6 sm:max-w-3xl">
-        <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          className="placeholder:text-secondary-foreground/60 w-full resize-none bg-transparent leading-6 text-white outline-none disabled:opacity-0"
-          placeholder="Type your message here..."
-        />
-        <button
-          className="send-button absolute right-5 bottom-5 z-10 flex h-9 w-9 items-center justify-center rounded-md disabled:opacity-70"
-          onClick={onSendRequest}
-          disabled={body.length === 0}
-        >
-          <ArrowUp color="white" size={20} />
-        </button>
-      </div>
+      <ChatMessageInputPanel onSendChatRequest={onSendRequest} />
     </div>
   );
 };
