@@ -4,11 +4,13 @@ import OpenAI from 'openai';
 import Redis from 'ioredis';
 import dotenv from 'dotenv';
 import { ConvexHttpClient } from 'convex/browser';
+import multipart from '@fastify/multipart';
 
 dotenv.config();
 
 const fastify = Fastify({ logger: true });
 await fastify.register(cors, { origin: true });
+await fastify.register(multipart);
 
 const client = new ConvexHttpClient(process.env.CONVEX_URL);
 
@@ -34,6 +36,12 @@ const redis = new Redis({
   port: +process.env.REDIS_PORT,
 });
 
+const VISION_MODELS = [
+  'gpt-4-vision-preview',
+  'claude-3-opus-20240229',
+  'claude-3-sonnet-20240229',
+];
+
 async function generateConversationTitle(conversationId, content) {
   const titleCompletion = await openai.chat.completions.create({
     model: 'gpt-3.5-turbo',
@@ -54,7 +62,22 @@ async function generateConversationTitle(conversationId, content) {
   });
 }
 
-async function startLLMJob(streamId, conversationId, messages, model = 'gpt-3.5-turbo') {
+async function processImage(file) {
+  const chunks = [];
+  for await (const chunk of file) {
+    chunks.push(chunk);
+  }
+  const buffer = Buffer.concat(chunks);
+  return buffer.toString('base64');
+}
+
+async function startLLMJob(
+  streamId,
+  conversationId,
+  messages,
+  model = 'gpt-3.5-turbo',
+  imageData = null
+) {
   let messageId;
 
   try {
@@ -80,13 +103,26 @@ async function startLLMJob(streamId, conversationId, messages, model = 'gpt-3.5-
 
     const completionParams = {
       model,
-      messages,
+      messages: imageData
+        ? [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: messages[messages.length - 1].content },
+                { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageData}` } },
+              ],
+            },
+            ...messages,
+          ]
+        : messages,
       stream: true,
     };
 
     switch (model) {
       case 'gpt-3.5-turbo':
       case 'gpt-4':
+      case 'o4-mini':
+      case 'gpt-4-vision-preview':
         completion = await openai.chat.completions.create(completionParams);
         break;
       case 'gemini-2.0-flash':
@@ -94,6 +130,8 @@ async function startLLMJob(streamId, conversationId, messages, model = 'gpt-3.5-
         completion = await gemini.chat.completions.create(completionParams);
         break;
       case 'claude-sonnet-4-20250514':
+      case 'claude-3-opus-20240229':
+      case 'claude-3-sonnet-20240229':
         completion = await anthropic.chat.completions.create(completionParams);
         break;
       case 'deepseek-chat':
@@ -154,11 +192,46 @@ async function startLLMJob(streamId, conversationId, messages, model = 'gpt-3.5-
 }
 
 fastify.post('/api/chat/start', async (request, reply) => {
-  const { messages, conversationId, resumableStreamId, model = 'gpt-3.5-turbo' } = request.body;
-  startLLMJob(resumableStreamId, conversationId, messages, model).catch((err) =>
-    console.error(err)
-  );
-  return reply.send({ ok: true });
+  try {
+    const data = await request.file();
+    let messages,
+      conversationId,
+      resumableStreamId,
+      model = 'gpt-3.5-turbo',
+      imageData = null;
+
+    if (data) {
+      // Handle multipart form data
+      const fields = {};
+      for (const [key, value] of Object.entries(data.fields)) {
+        fields[key] = value.value;
+      }
+
+      messages = JSON.parse(fields.messages);
+      conversationId = fields.conversationId;
+      resumableStreamId = fields.resumableStreamId;
+      model = fields.model || 'gpt-3.5-turbo';
+
+      if (data.filename) {
+        imageData = await processImage(data.file);
+      }
+    } else {
+      // Handle regular JSON data
+      const body = request.body;
+      messages = body.messages;
+      conversationId = body.conversationId;
+      resumableStreamId = body.resumableStreamId;
+      model = body.model || 'gpt-3.5-turbo';
+    }
+
+    startLLMJob(resumableStreamId, conversationId, messages, model, imageData).catch((err) =>
+      console.error(err)
+    );
+    return reply.send({ ok: true });
+  } catch (error) {
+    console.error('Error processing request:', error);
+    return reply.status(500).send({ error: 'Internal server error' });
+  }
 });
 
 fastify.get('/api/chat/stream', async (request, reply) => {
