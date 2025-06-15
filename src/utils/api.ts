@@ -1,26 +1,40 @@
+import { CompletedChatAttachment } from '@t3chat/interfaces/chat';
+
 const API_ENDPOINT = 'http://localhost:4000';
 
 interface StartChatParams {
   content: string;
   conversationId: string;
   model: string;
-  image?: File;
+  attachments: CompletedChatAttachment[];
 }
 
-export const startChat = async ({ content, conversationId, model, image }: StartChatParams) => {
-  const formData = new FormData();
+export const startChat = async ({
+  content,
+  conversationId,
+  model,
+  attachments,
+}: StartChatParams) => {
+  const messages = [
+    {
+      role: 'user',
+      content: [{ type: 'text', text: content }],
+    },
+  ];
 
-  formData.append('messages', JSON.stringify([{ role: 'user', content }]));
-  formData.append('conversationId', conversationId);
-  formData.append('model', model);
-
-  if (image) {
-    formData.append('image', image);
-  }
+  console.log({ messages });
 
   const res = await fetch(`${API_ENDPOINT}/api/chat/start`, {
     method: 'POST',
-    body: formData,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      messages,
+      conversationId,
+      model,
+      attachments,
+    }),
   });
 
   return await res.json();

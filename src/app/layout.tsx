@@ -8,6 +8,7 @@ import { auth } from '@clerk/nextjs/server';
 
 import { ConvexClientProvider } from '@t3chat/providers/ConvexClientProvider';
 import { BaseLayout } from '@t3chat/components/layout/BaseLayout';
+import { Toaster } from '@t3chat/components/ui';
 import { SessionProvider } from '@t3chat/providers/SessionProvider';
 
 import { api } from '../../convex/_generated/api';
@@ -38,6 +39,7 @@ export default async function RootLayout({
         <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
           <ConvexClientProvider>
             <SessionProvider sessionId={sessionId}>
+              <Toaster />
               <BaseLayout preloadedConversations={conversations}>{children}</BaseLayout>
             </SessionProvider>
           </ConvexClientProvider>

@@ -2,3 +2,5 @@ export { ActionButton } from './ActionButton';
 export { Popover } from './Popover';
 export { Tooltip } from './Tooltip';
 export { Dialog } from './Dialog';
+export { Toaster } from './Toaster';
+export { Spinner } from './Spinner';

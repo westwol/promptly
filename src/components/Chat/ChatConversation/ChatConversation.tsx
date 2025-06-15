@@ -5,13 +5,14 @@ import { useConvex, useMutation, useQuery } from 'convex/react';
 import clsx from 'clsx';
 
 import { usePreferencesStore } from '@t3chat/store/preferences';
+import { startChat } from '@t3chat/utils/api';
 
 import { ChatMessage } from './ChatMessage';
 import { ThinkingIndicator } from './ThinkingIndicator/ThinkingIndicator';
 import { ChatMessageInputPanel } from '../ChatMessageInputPanel';
 import { api } from '../../../../convex/_generated/api';
 import { Doc } from '../../../../convex/_generated/dataModel';
-import { startChat } from '@t3chat/utils/api';
+import { CompletedChatAttachment } from '@t3chat/interfaces/chat';
 
 const shouldDisplayThinkingIndicator = (messages: Doc<'messages'>[]) => {
   if (messages.length === 0) {
@@ -52,7 +53,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     el.scrollTo({ top: el.scrollHeight, behavior: 'instant' });
   }, []);
 
-  const onSendRequest = async (content: string, imageFile?: File) => {
+  const onSendRequest = async (content: string, attachments: CompletedChatAttachment[]) => {
     const preferencesStore = usePreferencesStore.getState();
 
     if (!conversationData?.conversation) {
@@ -84,7 +85,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       content,
       conversationId: conversationData.conversation._id,
       model: preferencesStore.model.model,
-      image: imageFile,
+      attachments,
     });
   };
 
@@ -179,7 +180,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
   }, [messages, scrollToBottom]);
 
   return (
-    <div className="grid h-screen grid-rows-[1fr_100px]">
+    <div className="grid h-screen grid-rows-[1fr_auto]">
       <div className="overflow-auto" ref={messagesContainerRef} style={{ scrollBehavior: 'auto' }}>
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 space-y-12 px-4 pt-4 pb-10 break-words whitespace-pre-wrap text-white">
           {messages.map((message, i) =>
