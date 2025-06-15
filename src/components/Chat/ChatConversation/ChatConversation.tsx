@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useConvex, useMutation, useQuery } from 'convex/react';
-import { v4 as uuidv4 } from 'uuid';
 import clsx from 'clsx';
 
 import { usePreferencesStore } from '@t3chat/store/preferences';
@@ -55,7 +54,6 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
 
   const onSendRequest = async (content: string, imageFile?: File) => {
     const preferencesStore = usePreferencesStore.getState();
-    const generatedResumableStreamId = uuidv4();
 
     if (!conversationData?.conversation) {
       return;
@@ -82,12 +80,9 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       } as Doc<'messages'>,
     ]);
 
-    console.log({ imageFile });
-
     startChat({
       content,
       conversationId: conversationData.conversation._id,
-      resumableStreamId: generatedResumableStreamId,
       model: preferencesStore.model.model,
       image: imageFile,
     });

@@ -55,7 +55,6 @@ export const StartConversation = () => {
   const onSendRequest = async (content: string) => {
     const preferencesStore = usePreferencesStore.getState();
     const generatedConversationId = uuidv4();
-    const generatedResumableStreamId = uuidv4();
 
     router.push(`/conversations/${generatedConversationId}`);
 
@@ -68,7 +67,6 @@ export const StartConversation = () => {
     startChat({
       content,
       conversationId,
-      resumableStreamId: generatedResumableStreamId,
       model: preferencesStore.model.model,
     });
   };
