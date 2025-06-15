@@ -1,0 +1,1 @@
+export { ChatTextArea } from './ChatTextArea';

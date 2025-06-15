@@ -5,26 +5,14 @@ import {
   completeMessage,
   generateConversationTitle,
 } from './conversation.js';
-
-export async function processImage(file) {
-  if (Buffer.isBuffer(file)) {
-    return file.toString('base64');
-  }
-
-  const chunks = [];
-  for await (const chunk of file) {
-    chunks.push(chunk);
-  }
-  const buffer = Buffer.concat(chunks);
-  return buffer.toString('base64');
-}
+import { mapAttachmentsForOpenAiSDK } from '../utils/attachments.js';
 
 export async function startLLMJob(
   streamId,
   conversationId,
   messages,
   model = 'gpt-3.5-turbo',
-  imageData = null
+  attachments
 ) {
   let messageId;
 
@@ -34,29 +22,17 @@ export async function startLLMJob(
 
     messageId = await addMessageToConversation(conversationId, streamId, 'assistant');
 
-    const shouldGenerateTitle = messages.length === 1;
-    if (shouldGenerateTitle) {
-      generateConversationTitle(conversationId, messages[0].content).catch((err) =>
-        console.error('Title generation failed:', err)
-      );
-    }
+    generateConversationTitle(conversationId, messages[0].content).catch((err) =>
+      console.error('Title generation failed:', err)
+    );
+
+    const attachmentMessage = await mapAttachmentsForOpenAiSDK(attachments);
 
     let completion;
 
     const completionParams = {
       model,
-      messages: imageData
-        ? [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: messages[messages.length - 1].content },
-                { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageData}` } },
-              ],
-            },
-            ...messages,
-          ]
-        : messages,
+      messages: [...messages, ...attachmentMessage],
       stream: true,
     };
 
@@ -64,7 +40,6 @@ export async function startLLMJob(
       case 'gpt-3.5-turbo':
       case 'gpt-4':
       case 'o4-mini':
-      case 'gpt-4-vision-preview':
         completion = await openai.chat.completions.create(completionParams);
         break;
       case 'gemini-2.0-flash':
@@ -94,27 +69,24 @@ export async function startLLMJob(
       fullContent += text;
       const event = { id: idx++, text };
 
-      // Send events immediately without batching
       await Promise.all([
         redis.lpush(`chat:${streamId}`, JSON.stringify(event)),
         redis.publish(`chat:pub:${streamId}`, JSON.stringify(event)),
       ]);
     }
 
-    // Mark completion
     await Promise.all([
       redis.lpush(`chat:${streamId}`, JSON.stringify({ type: 'DONE' })),
       redis.publish(`chat:pub:${streamId}`, JSON.stringify({ type: 'DONE' })),
     ]);
 
-    // Update message in Convex
     await completeMessage(messageId, fullContent);
 
-    // Set TTL for cleanup
+    // Cleanup
     await redis.expire(`chat:${streamId}`, 3600);
   } catch (error) {
     console.error('Stream processing error:', error);
-    // Ensure we mark the stream as done even on error
+
     await Promise.all([
       redis.lpush(`chat:${streamId}`, JSON.stringify({ type: 'DONE' })),
       redis.publish(`chat:pub:${streamId}`, JSON.stringify({ type: 'DONE' })),

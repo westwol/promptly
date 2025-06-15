@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, LucideSearch, Squirrel } from 'lucide-react';
 
 import { Popover } from '@t3chat/components/ui';
-import { LlmModel, LlmModelType } from '@t3chat/interfaces/llmModels';
+import { LlmModel } from '@t3chat/interfaces/llmModels';
 import { usePreferencesStore } from '@t3chat/store/preferences';
 import { AVAILABLE_MODELS } from '@t3chat/fixtures/availableModels';
 
@@ -39,10 +39,10 @@ export const ModelSelectionPopover = () => {
 
   return (
     <Popover.Root open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-      <Popover.Trigger className="disabled:hover:text-foreground/50 hover:hover:bg-secondary/20 relative mb-1.5 flex h-10 w-fit cursor-pointer items-center justify-center gap-2 rounded-md px-2 text-xs font-medium whitespace-nowrap text-white transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
+      <Popover.Trigger className="hover:hover:bg-secondary/20 flex cursor-pointer items-center gap-1 rounded-md p-1.5 text-xs text-white">
         {preferencesStore.model.name}
         <motion.div animate={{ rotate: isPopoverOpen ? 180 : 0 }} transition={{ duration: 0.25 }}>
-          <ChevronDown />
+          <ChevronDown size={12} />
         </motion.div>
       </Popover.Trigger>
       <Popover.Content
