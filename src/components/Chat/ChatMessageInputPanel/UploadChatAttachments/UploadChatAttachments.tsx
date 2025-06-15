@@ -1,22 +1,22 @@
-import { ChangeEvent, Dispatch, SetStateAction, useRef } from 'react';
+import { ChangeEvent, useRef } from 'react';
 import { toast } from 'sonner';
 import { Paperclip } from 'lucide-react';
 
 import { Tooltip } from '@t3chat/components/ui';
 import { useUploadThing } from '@t3chat/utils/uploadthing';
 import { ChatAttachment } from '@t3chat/interfaces/chat';
+import { useChatStore } from '@t3chat/store/chat';
 
-interface UploadChatAttachmentsProps {
-  onSetAttachments: Dispatch<SetStateAction<ChatAttachment[]>>;
-}
+export const UploadChatAttachments = () => {
+  const currentAttachments = useChatStore((state) => state.attachments);
+  const setAttachments = useChatStore((state) => state.setAttachments);
 
-export const UploadChatAttachments = ({ onSetAttachments }: UploadChatAttachmentsProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { startUpload, isUploading } = useUploadThing('attachments', {
     onClientUploadComplete: (attachments) => {
       toast.success('Attachments uploaded!');
-      onSetAttachments((currentAttachments) =>
+      setAttachments(
         currentAttachments.map((currentAttachment) => {
           const uploadedAttachment = attachments.find(
             (attachment) => attachment.name === currentAttachment.name
@@ -34,7 +34,7 @@ export const UploadChatAttachments = ({ onSetAttachments }: UploadChatAttachment
     },
     onUploadError: () => {
       toast.error('Error uploading attachments');
-      onSetAttachments((currentAttachments) =>
+      setAttachments(
         currentAttachments.map((currentAttachment) => {
           return currentAttachment.status === 'uploading'
             ? { ...currentAttachment, status: 'error' }
@@ -52,7 +52,7 @@ export const UploadChatAttachments = ({ onSetAttachments }: UploadChatAttachment
     }
 
     startUpload(files);
-    onSetAttachments((currentAttachments) => [
+    setAttachments([
       ...currentAttachments,
       ...files.map((file) => ({ name: file.name, status: 'uploading' }) as ChatAttachment),
     ]);
@@ -76,7 +76,7 @@ export const UploadChatAttachments = ({ onSetAttachments }: UploadChatAttachment
         <Tooltip.Trigger asChild>
           <button
             type="button"
-            className="flex cursor-pointer items-center gap-2 rounded-xl border border-gray-600 p-1.5 text-xs text-white"
+            className="hover:hover:bg-secondary/20 flex cursor-pointer items-center gap-2 rounded-xl border border-gray-600 p-1.5 text-xs text-white"
             onClick={onStartSelectingAttachments}
             disabled={isUploading}
           >

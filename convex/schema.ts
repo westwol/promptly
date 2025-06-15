@@ -6,6 +6,7 @@ export default defineSchema({
     userId: v.optional(v.string()), // References to user id
     conversationUuid: v.string(), // Conversation uuid
     title: v.string(), // Optional title for group chats or AI context label
+    processing: v.boolean(), // Track when a conversation is generating a message
     createdAt: v.string(), // When the conversation was started
     updatedAt: v.string(), // Last update time
   }).index('by_user_id', ['userId']),

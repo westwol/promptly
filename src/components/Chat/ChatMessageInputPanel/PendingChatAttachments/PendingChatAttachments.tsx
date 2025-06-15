@@ -1,31 +1,24 @@
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import { useMemo } from 'react';
 import { X } from 'lucide-react';
 
 import { Spinner } from '@t3chat/components/ui';
-import { ChatAttachment } from '@t3chat/interfaces/chat';
+import { useChatStore } from '@t3chat/store/chat';
 
 import { groupAttachments } from './utils';
 
-interface PendingChatAttachmentsProps {
-  attachments: ChatAttachment[];
-  onSetAttachments: Dispatch<SetStateAction<ChatAttachment[]>>;
-}
+export const PendingChatAttachments = () => {
+  const currentAttachments = useChatStore((state) => state.attachments);
+  const setAttachments = useChatStore((state) => state.setAttachments);
 
-export const PendingChatAttachments = ({
-  attachments,
-  onSetAttachments,
-}: PendingChatAttachmentsProps) => {
   const onRemoveAttachment = (name: string) => {
-    onSetAttachments((currentAttachments) =>
-      currentAttachments.filter((attachment) => attachment.name !== name)
-    );
+    setAttachments(currentAttachments.filter((attachment) => attachment.name !== name));
   };
 
   const groupedAttachments = useMemo(() => {
-    return groupAttachments(attachments);
-  }, [attachments]);
+    return groupAttachments(currentAttachments);
+  }, [currentAttachments]);
 
-  if (attachments.length === 0) {
+  if (currentAttachments.length === 0) {
     return null;
   }
 
@@ -39,10 +32,10 @@ export const PendingChatAttachments = ({
           >
             <img src={attachment.url} className="h-16 w-16 rounded-md object-cover" />
             <button
-              className="absolute top-1 right-1 cursor-pointer"
+              className="absolute top-1 right-1 cursor-pointer rounded-sm bg-black/50 p-1"
               onClick={() => onRemoveAttachment(attachment.name)}
             >
-              <X size={16} />
+              <X size={12} color="white" />
             </button>
           </li>
         ))}

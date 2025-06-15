@@ -6,7 +6,7 @@ export const AVAILABLE_MODELS: LlmModel[] = [
     model: 'gpt-3.5-turbo',
     type: 'openai',
     description: `OpenAI's fastest model`,
-    capabilities: ['vision', 'web', 'document'],
+    capabilities: ['reasoning'],
   },
   {
     name: 'o4-mini',
