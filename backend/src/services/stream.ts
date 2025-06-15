@@ -1,20 +1,50 @@
-import { redis } from '../config/redis.js';
-import { openai, deepseek, anthropic, gemini } from '../config/llm.js';
+import { v4 as uuidv4 } from 'uuid';
+
+import { ChatCompletionCreateParamsStreaming } from 'openai/resources/index.js';
+
+import { Id } from '@t3chat-convex/_generated/dataModel.js';
+
+import { redis } from '../config/redis.ts';
+import { openai, deepseek, anthropic, gemini } from '../config/llm.ts';
 import {
+  generateConversationTitle,
   addMessageToConversation,
   completeMessage,
-  generateConversationTitle,
-} from './conversation.js';
-import { mapAttachmentsForOpenAiSDK } from '../utils/attachments.js';
+} from './conversation.ts';
+import { mapAttachmentsForOpenAiSDK } from '../utils/attachments.ts';
 
-export async function startLLMJob(
-  streamId,
+interface Message {
+  role: string;
+  content: string;
+}
+
+interface Attachment {
+  type: string;
+  url: string;
+}
+
+interface ChatEvent {
+  id?: number;
+  type?: 'INIT' | 'DONE' | 'MESSAGE';
+  text?: string;
+}
+
+interface StartLlmJobParams {
+  conversationId: Id<'conversations'>;
+  messages: Message[];
+  model: string;
+  attachments?: Attachment[];
+}
+
+export async function startLLMJob({
   conversationId,
   messages,
-  model = 'gpt-3.5-turbo',
-  attachments
-) {
-  let messageId;
+  model,
+  attachments,
+}: StartLlmJobParams) {
+  const streamId = uuidv4();
+
+  let messageId: Id<'messages'> | undefined;
 
   try {
     // Initialize stream
@@ -26,7 +56,7 @@ export async function startLLMJob(
       console.error('Title generation failed:', err)
     );
 
-    const attachmentMessage = await mapAttachmentsForOpenAiSDK(attachments);
+    const attachmentMessage = await mapAttachmentsForOpenAiSDK(attachments || []);
 
     let completion;
 
@@ -34,7 +64,7 @@ export async function startLLMJob(
       model,
       messages: [...messages, ...attachmentMessage],
       stream: true,
-    };
+    } as ChatCompletionCreateParamsStreaming;
 
     switch (model) {
       case 'gpt-3.5-turbo':
@@ -63,11 +93,11 @@ export async function startLLMJob(
     let fullContent = '';
 
     for await (const chunk of completion) {
-      let text = chunk.choices?.[0]?.delta?.content;
+      const text = chunk.choices?.[0]?.delta?.content;
       if (!text) continue;
 
       fullContent += text;
-      const event = { id: idx++, text };
+      const event: ChatEvent = { id: idx++, text };
 
       await Promise.all([
         redis.lpush(`chat:${streamId}`, JSON.stringify(event)),
@@ -85,13 +115,17 @@ export async function startLLMJob(
     // Cleanup
     await redis.expire(`chat:${streamId}`, 3600);
   } catch (error) {
-    console.error('Stream processing error:', error);
-
-    await Promise.all([
+    const errorPromises: Promise<unknown>[] = [
       redis.lpush(`chat:${streamId}`, JSON.stringify({ type: 'DONE' })),
       redis.publish(`chat:pub:${streamId}`, JSON.stringify({ type: 'DONE' })),
-      completeMessage(messageId, 'Error processing this request please retry'),
-    ]);
+    ];
+
+    if (messageId) {
+      errorPromises.push(completeMessage(messageId, 'Error processing this request please retry'));
+    }
+
+    console.error('Stream processing error:', error);
+    await Promise.all(errorPromises);
     throw error;
   }
 }

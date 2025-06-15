@@ -1,14 +1,13 @@
 import dotenv from 'dotenv';
-
-import Fastify from 'fastify';
+import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 
-import { startChatHandler } from './src/routes/chat.js';
-import { streamChatHandler } from './src/routes/stream-chat.js';
+import { startChatHandler } from './src/routes/chat.ts';
+import { streamChatHandler } from './src/routes/stream-chat.ts';
 
 dotenv.config();
 
-const fastify = Fastify({ logger: true });
+const fastify: FastifyInstance = Fastify({ logger: true });
 
 await fastify.register(cors, { origin: true });
 

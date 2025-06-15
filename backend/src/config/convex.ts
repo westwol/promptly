@@ -3,4 +3,4 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const client = new ConvexHttpClient(process.env.CONVEX_URL);
+export const client = new ConvexHttpClient(process.env.CONVEX_URL ?? '');

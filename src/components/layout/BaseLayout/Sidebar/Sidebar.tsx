@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { Preloaded } from 'convex/react';
 import { Brain } from 'lucide-react';
 
+import { api } from '@t3chat-convex/_generated/api';
+
 import { ChatList } from './ChatList';
-import { api } from '../../../../../convex/_generated/api';
 import { AuthModal } from './AuthModal';
 
 interface SidebarProps {

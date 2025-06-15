@@ -6,12 +6,12 @@ import clsx from 'clsx';
 
 import { usePreferencesStore } from '@t3chat/store/preferences';
 import { startChat } from '@t3chat/utils/api';
+import { api } from '@t3chat-convex/_generated/api';
 
 import { ChatMessage } from './ChatMessage';
 import { ThinkingIndicator } from './ThinkingIndicator/ThinkingIndicator';
 import { ChatMessageInputPanel } from '../ChatMessageInputPanel';
-import { api } from '../../../../convex/_generated/api';
-import { Doc } from '../../../../convex/_generated/dataModel';
+import { Doc } from '@t3chat-convex/_generated/dataModel';
 import { CompletedChatAttachment } from '@t3chat/interfaces/chat';
 
 const shouldDisplayThinkingIndicator = (messages: Doc<'messages'>[]) => {
