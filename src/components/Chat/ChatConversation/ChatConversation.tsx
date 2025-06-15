@@ -52,7 +52,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     el.scrollTo({ top: el.scrollHeight, behavior: 'instant' });
   }, []);
 
-  const onSendRequest = async (content: string) => {
+  const onSendRequest = async (content: string, imageFile?: File) => {
     const preferencesStore = usePreferencesStore.getState();
     const generatedResumableStreamId = uuidv4();
 
@@ -81,15 +81,19 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       } as Doc<'messages'>,
     ]);
 
+    const formData = new FormData();
+    formData.append('messages', JSON.stringify([{ role: 'user', content }]));
+    formData.append('conversationId', conversationData.conversation._id);
+    formData.append('resumableStreamId', generatedResumableStreamId);
+    formData.append('model', preferencesStore.model.model);
+
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+
     fetch('http://localhost:4000/api/chat/start', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: preferencesStore.model.model,
-        conversationId: conversationData?.conversation?._id,
-        resumableStreamId: generatedResumableStreamId,
-        messages: [{ role: 'user', content }],
-      }),
+      body: formData,
     });
   };
 
