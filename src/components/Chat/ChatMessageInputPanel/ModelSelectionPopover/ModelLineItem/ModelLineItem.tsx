@@ -1,18 +1,10 @@
 import { LucideInfo } from 'lucide-react';
 
-import { LlmModel, LlmModelType } from '@t3chat/interfaces/llmModels';
-import { ReactNode } from 'react';
-import { AnthropicIcon, DeepseekIcon, GeminiIcon, OpenaiIcon } from '@t3chat/icons';
+import { LlmModel } from '@t3chat/interfaces/llmModels';
 import { Tooltip } from '@t3chat/components/ui';
 
 import { ModelLineItemCapability } from './ModelLineItemCapability';
-
-const MODEL_ICON_MAP: Record<LlmModelType, ReactNode> = {
-  gemini: <GeminiIcon />,
-  openai: <OpenaiIcon />,
-  anthropic: <AnthropicIcon />,
-  deepseek: <DeepseekIcon />,
-};
+import { MODEL_ICON_MAP } from '../shared/constants';
 
 interface ModelLineItemsProps extends LlmModel {
   onSelect: () => void;

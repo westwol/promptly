@@ -58,6 +58,7 @@ export const createInitialConversation = mutation({
       title: '',
       userId,
       conversationUuid: conversationId,
+      processing: true,
       updatedAt: currentDate,
       createdAt: currentDate,
     });
@@ -109,6 +110,20 @@ export const addNewMessageToConversation = mutation({
       updatedAt: currentDate,
     });
     return messageId;
+  },
+});
+
+export const updateProcessingStatus = mutation({
+  args: {
+    conversationId: v.id('conversations'),
+    processing: v.boolean(),
+  },
+  handler: async (ctx, { conversationId, processing }) => {
+    const currentDate = new Date().toISOString();
+    await ctx.db.patch(conversationId, {
+      processing,
+      updatedAt: currentDate,
+    });
   },
 });
 

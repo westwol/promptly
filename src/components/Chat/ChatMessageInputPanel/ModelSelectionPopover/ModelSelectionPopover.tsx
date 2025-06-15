@@ -8,6 +8,7 @@ import { usePreferencesStore } from '@t3chat/store/preferences';
 import { AVAILABLE_MODELS } from '@t3chat/fixtures/availableModels';
 
 import { ModelLineItem } from './ModelLineItem';
+import { MODEL_ICON_MAP } from './shared/constants';
 
 export const ModelSelectionPopover = () => {
   const preferencesStore = usePreferencesStore();
@@ -39,7 +40,8 @@ export const ModelSelectionPopover = () => {
 
   return (
     <Popover.Root open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-      <Popover.Trigger className="hover:hover:bg-secondary/20 flex cursor-pointer items-center gap-1 rounded-md p-1.5 text-xs text-white">
+      <Popover.Trigger className="hover:hover:bg-secondary/20 flex cursor-pointer items-center gap-2 rounded-xl border border-gray-600 p-1.5 text-xs text-white">
+        {MODEL_ICON_MAP[preferencesStore.model.type]}
         {preferencesStore.model.name}
         <motion.div animate={{ rotate: isPopoverOpen ? 180 : 0 }} transition={{ duration: 0.25 }}>
           <ChevronDown size={12} />

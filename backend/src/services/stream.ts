@@ -10,6 +10,7 @@ import {
   generateConversationTitle,
   addMessageToConversation,
   completeMessage,
+  updateConversationProcessingStatus,
 } from './conversation.ts';
 import { mapAttachmentsForOpenAiSDK } from '../utils/attachments.ts';
 
@@ -52,9 +53,12 @@ export async function startLLMJob({
 
     messageId = await addMessageToConversation(conversationId, streamId, 'assistant');
 
-    generateConversationTitle(conversationId, messages[0].content).catch((err) =>
-      console.error('Title generation failed:', err)
-    );
+    // Update conversation to processing
+    updateConversationProcessingStatus(conversationId, true);
+
+    // Generate conversation title
+    /* @ts-ignore */
+    generateConversationTitle(conversationId, messages[0].content[0].text);
 
     const attachmentMessage = await mapAttachmentsForOpenAiSDK(attachments || []);
 
@@ -127,5 +131,8 @@ export async function startLLMJob({
     console.error('Stream processing error:', error);
     await Promise.all(errorPromises);
     throw error;
+  } finally {
+    // Finished processing the conversation
+    updateConversationProcessingStatus(conversationId, false);
   }
 }

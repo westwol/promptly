@@ -2,17 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useConvex, useMutation, useQuery } from 'convex/react';
-import clsx from 'clsx';
 
 import { usePreferencesStore } from '@t3chat/store/preferences';
 import { startChat } from '@t3chat/utils/api';
 import { api } from '@t3chat-convex/_generated/api';
+import { Doc } from '@t3chat-convex/_generated/dataModel';
+import { CompletedChatAttachment } from '@t3chat/interfaces/chat';
 
 import { ChatMessage } from './ChatMessage';
 import { ThinkingIndicator } from './ThinkingIndicator/ThinkingIndicator';
 import { ChatMessageInputPanel } from '../ChatMessageInputPanel';
-import { Doc } from '@t3chat-convex/_generated/dataModel';
-import { CompletedChatAttachment } from '@t3chat/interfaces/chat';
+import { cn } from '@t3chat/lib/utils';
+import { useChatStore } from '@t3chat/store/chat';
 
 const shouldDisplayThinkingIndicator = (messages: Doc<'messages'>[]) => {
   if (messages.length === 0) {
@@ -53,7 +54,8 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     el.scrollTo({ top: el.scrollHeight, behavior: 'instant' });
   }, []);
 
-  const onSendRequest = async (content: string, attachments: CompletedChatAttachment[]) => {
+  const onSendRequest = async () => {
+    const chatStore = useChatStore.getState();
     const preferencesStore = usePreferencesStore.getState();
 
     if (!conversationData?.conversation) {
@@ -62,7 +64,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
 
     addMessageToConversation({
       conversationId: conversationData.conversation._id,
-      content,
+      content: chatStore.content,
       role: 'user',
       status: 'complete',
     });
@@ -75,18 +77,20 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
         _id: 'temporal-id',
         status: 'complete',
         role: 'user',
-        content,
+        content: chatStore.content,
         createdAt: currentDate,
         updatedAt: currentDate,
       } as Doc<'messages'>,
     ]);
 
     startChat({
-      content,
+      content: chatStore.content,
       conversationId: conversationData.conversation._id,
       model: preferencesStore.model.model,
-      attachments,
+      attachments: chatStore.attachments as CompletedChatAttachment[],
     });
+
+    chatStore.resetState();
   };
 
   const onStartResumableStream = (streamId: string) => {
@@ -150,7 +154,6 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       return;
     }
 
-    console.log('trigger from useEffect');
     lastStreamReceived.current = lastMessage.resumableStreamId;
     onStartResumableStream(lastMessage.resumableStreamId);
   }, [messages]);
@@ -181,20 +184,15 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
 
   return (
     <div className="grid h-screen grid-rows-[1fr_auto]">
-      <div className="overflow-auto" ref={messagesContainerRef} style={{ scrollBehavior: 'auto' }}>
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 space-y-12 px-4 pt-4 pb-10 break-words whitespace-pre-wrap text-white">
-          {messages.map((message, i) =>
-            message.content.length > 0 ? (
-              <div
-                key={i}
-                className={clsx(
-                  'my-1',
-                  message.role === 'user' && 'ml-auto rounded-md bg-[#2C2632] p-3'
-                )}
-              >
-                <ChatMessage content={message.content} />
-              </div>
-            ) : null
+      <div ref={messagesContainerRef} className="overflow-auto scroll-auto">
+        <div
+          className={cn(
+            'mx-auto flex w-full max-w-3xl flex-col gap-2 space-y-12 px-4 pt-4 pb-10 break-words whitespace-pre-wrap text-white duration-300',
+            messages.length > 0 && 'animate-in fade-in-50 zoom-in-95'
+          )}
+        >
+          {messages.map((message) =>
+            message.content.length > 0 ? <ChatMessage key={message._id} {...message} /> : null
           )}
           {shouldShowThinkingIndicator && <ThinkingIndicator />}
         </div>

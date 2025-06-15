@@ -8,23 +8,26 @@ export async function generateConversationTitle(
   conversationId: Id<'conversations'>,
   content: string
 ) {
-  const titleCompletion = await openai.chat.completions.create({
-    model: 'gpt-3.5-turbo',
-    messages: [
-      {
-        role: 'system',
-        content: `Generate a short, concise title (max 5 words) for based on the following content. Return only the title text, nothing else: ${content}`,
-      },
-    ],
-    max_tokens: 20,
-  });
+  try {
+    console.log({ content });
+    const titleCompletion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: `Generate a short, concise title (max 5 words) for based on the following content. Return only the title text, nothing else: ${content}`,
+        },
+      ],
+      max_tokens: 20,
+    });
 
-  const title = titleCompletion?.choices[0]?.message?.content?.trim() || 'New conversation';
+    const title = titleCompletion?.choices[0]?.message?.content?.trim() || 'New conversation';
 
-  await client.mutation(api.conversations.updateConversation, {
-    conversationId,
-    title,
-  });
+    await client.mutation(api.conversations.updateConversation, {
+      conversationId,
+      title,
+    });
+  } catch {}
 }
 
 export async function addMessageToConversation(
@@ -39,6 +42,16 @@ export async function addMessageToConversation(
     role,
     status: 'streaming',
     content,
+  });
+}
+
+export async function updateConversationProcessingStatus(
+  conversationId: Id<'conversations'>,
+  processing: boolean
+) {
+  return await client.mutation(api.conversations.updateProcessingStatus, {
+    conversationId,
+    processing,
   });
 }
 

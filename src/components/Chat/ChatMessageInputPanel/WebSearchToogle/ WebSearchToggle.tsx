@@ -1,23 +1,25 @@
-import { Tooltip } from '@t3chat/components/ui';
 import clsx from 'clsx';
 import { Globe } from 'lucide-react';
 
-interface WebSearchToggleProps {
-  webSearchEnabled: boolean;
-  onChangeWebSearch: (enabled: boolean) => void;
-}
+import { Tooltip } from '@t3chat/components/ui';
+import { useChatStore } from '@t3chat/store/chat';
 
-export const WebSearchToggle = ({ webSearchEnabled, onChangeWebSearch }: WebSearchToggleProps) => {
+export const WebSearchToggle = () => {
+  const webSearchEnabled = useChatStore((state) => state.webSearchEnabled);
+  const setWebSearchEnabled = useChatStore((state) => state.setWebSearch);
+
+  console.log('re-rendering websearch toogle');
+
   return (
     <Tooltip.Root>
       <Tooltip.Trigger asChild>
         <button
           type="button"
           className={clsx(
-            'flex cursor-pointer items-center gap-2 rounded-xl border border-gray-600 p-1.5 text-xs text-white',
+            'hover:hover:bg-secondary/20 flex cursor-pointer items-center gap-2 rounded-xl border border-gray-600 p-1.5 text-xs text-white',
             webSearchEnabled && 'bg-primary'
           )}
-          onClick={() => onChangeWebSearch(!webSearchEnabled)}
+          onClick={() => setWebSearchEnabled(!webSearchEnabled)}
         >
           <Globe size={12} color={webSearchEnabled ? 'var(--color-sky-500)' : 'white'} />
           Search

@@ -1,0 +1,1 @@
+export { ChatRecommendations } from './ChatRecommendations';
