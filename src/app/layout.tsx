@@ -13,9 +13,9 @@ import { SessionProvider } from '@t3chat/components/providers/SessionProvider';
 import { api } from '../../convex/_generated/api';
 import { getSessionCookie } from '@t3chat/utils/sessions';
 
-const montserrat = Nunito_Sans({
-  variable: '--font-montserrat',
+const nunitoSans = Nunito_Sans({
   subsets: ['latin'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -34,7 +34,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${montserrat.variable} antialiased`}>
+      <body className={`${nunitoSans.className} antialiased`}>
         <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
           <ConvexClientProvider>
             <SessionProvider sessionId={sessionId}>
