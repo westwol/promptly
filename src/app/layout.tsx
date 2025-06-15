@@ -8,7 +8,7 @@ import { auth } from '@clerk/nextjs/server';
 
 import { ConvexClientProvider } from '@t3chat/providers/ConvexClientProvider';
 import { BaseLayout } from '@t3chat/components/layout/BaseLayout';
-import { SessionProvider } from '@t3chat/components/providers/SessionProvider';
+import { SessionProvider } from '@t3chat/providers/SessionProvider';
 
 import { api } from '../../convex/_generated/api';
 import { getSessionCookie } from '@t3chat/utils/sessions';
