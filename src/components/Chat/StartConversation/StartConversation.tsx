@@ -7,6 +7,9 @@ import { Code, GraduationCap, Newspaper, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { useSessionStore } from '@t3chat/store/session';
+import { startChat } from '@t3chat/utils/api';
+import { usePreferencesStore } from '@t3chat/store/preferences';
+
 import { api } from '../../../../convex/_generated/api';
 import { Doc } from '../../../../convex/_generated/dataModel';
 import { ChatMessageInputPanel } from '../ChatMessageInputPanel';
@@ -50,6 +53,7 @@ export const StartConversation = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const onSendRequest = async (content: string) => {
+    const preferencesStore = usePreferencesStore.getState();
     const generatedConversationId = uuidv4();
     const generatedResumableStreamId = uuidv4();
 
@@ -61,14 +65,11 @@ export const StartConversation = () => {
       sessionId,
     });
 
-    fetch('http://localhost:4000/api/chat/start', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        conversationId,
-        resumableStreamId: generatedResumableStreamId,
-        messages: [{ role: 'user', content }],
-      }),
+    startChat({
+      content,
+      conversationId,
+      resumableStreamId: generatedResumableStreamId,
+      model: preferencesStore.model.model,
     });
   };
 
