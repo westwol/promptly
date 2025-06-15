@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@t3chat/*": ["./src/*"]
+      "@t3chat/*": ["./src/*"],
+      "@t3chat-convex/*": ["./convex/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

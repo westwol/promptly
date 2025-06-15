@@ -1,8 +1,22 @@
+import { FastifyRequest, FastifyReply } from 'fastify';
 import Redis from 'ioredis';
 
-import { redis } from '../config/redis.js';
+import { redis } from '../config/redis.ts';
 
-export async function streamChatHandler(request, reply) {
+interface StreamQuery {
+  streamId: string;
+}
+
+interface ChatEvent {
+  id: string;
+  type: 'INIT' | 'DONE' | 'MESSAGE';
+  text?: string;
+}
+
+export async function streamChatHandler(
+  request: FastifyRequest<{ Querystring: StreamQuery }>,
+  reply: FastifyReply
+) {
   const streamId = request.query.streamId;
   if (!streamId) {
     return reply.status(400).send('Missing streamId');
@@ -22,7 +36,7 @@ export async function streamChatHandler(request, reply) {
   try {
     // Get existing events
     const rawList = await redis.lrange(`chat:${streamId}`, 0, -1);
-    const events = rawList.map(JSON.parse).reverse();
+    const events = rawList.map((item) => JSON.parse(item) as ChatEvent).reverse();
 
     // Send existing events
     for (const evt of events) {
@@ -33,13 +47,13 @@ export async function streamChatHandler(request, reply) {
         res.write(`event: done\ndata: \n\n`);
         continue;
       }
-      res.write(`id: ${evt.id}\nevent: message\ndata: ${evt.text.replace(/\n/g, '\\n')}\n\n`);
+      res.write(`id: ${evt.id}\nevent: message\ndata: ${evt.text?.replace(/\n/g, '\\n')}\n\n`);
     }
 
     // Subscribe for new events
     const sub = new Redis({
       host: process.env.REDIS_HOST,
-      port: +process.env.REDIS_PORT,
+      port: +(process.env.REDIS_PORT || '6379'),
     });
 
     await sub.subscribe(`chat:pub:${streamId}`);
@@ -48,11 +62,11 @@ export async function streamChatHandler(request, reply) {
       if (!isClientConnected) return;
 
       try {
-        const evt = JSON.parse(message);
+        const evt = JSON.parse(message) as ChatEvent;
         if (evt.type === 'DONE') {
           res.write(`event: done\ndata: \n\n`);
         } else {
-          res.write(`id: ${evt.id}\nevent: message\ndata: ${evt.text.replace(/\n/g, '\\n')}\n\n`);
+          res.write(`id: ${evt.id}\nevent: message\ndata: ${evt.text?.replace(/\n/g, '\\n')}\n\n`);
         }
       } catch (error) {
         console.error('Error processing message:', error);

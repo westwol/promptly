@@ -6,8 +6,8 @@ import { Preloaded, usePreloadedQuery } from 'convex/react';
 import { isToday, isYesterday, isThisWeek } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { api } from '../../../../../../convex/_generated/api';
-import { Doc } from '../../../../../../convex/_generated/dataModel';
+import { api } from '@t3chat-convex/_generated/api';
+import { Doc } from '@t3chat-convex/_generated/dataModel';
 import { useMemo } from 'react';
 import { LucideSearch } from 'lucide-react';
 

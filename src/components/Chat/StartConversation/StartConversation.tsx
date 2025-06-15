@@ -10,8 +10,8 @@ import { useSessionStore } from '@t3chat/store/session';
 import { startChat } from '@t3chat/utils/api';
 import { usePreferencesStore } from '@t3chat/store/preferences';
 
-import { api } from '../../../../convex/_generated/api';
-import { Doc } from '../../../../convex/_generated/dataModel';
+import { api } from '@t3chat-convex/_generated/api';
+import { Doc } from '@t3chat-convex/_generated/dataModel';
 import { ChatMessageInputPanel } from '../ChatMessageInputPanel';
 
 export const StartConversation = () => {

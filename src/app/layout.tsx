@@ -10,8 +10,7 @@ import { ConvexClientProvider } from '@t3chat/providers/ConvexClientProvider';
 import { BaseLayout } from '@t3chat/components/layout/BaseLayout';
 import { Toaster } from '@t3chat/components/ui';
 import { SessionProvider } from '@t3chat/providers/SessionProvider';
-
-import { api } from '../../convex/_generated/api';
+import { api } from '@t3chat-convex/_generated/api';
 import { getSessionCookie } from '@t3chat/utils/sessions';
 
 const nunitoSans = Nunito_Sans({

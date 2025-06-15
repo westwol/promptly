@@ -8,7 +8,7 @@ import {
   ResizableHandle,
 } from '@t3chat/components/ui/ResizablePanel';
 import { Preloaded } from 'convex/react';
-import { api } from '../../../../convex/_generated/api';
+import { api } from '@t3chat-convex/_generated/api';
 
 interface BaseLayoutProps {
   preloadedConversations: Preloaded<typeof api.conversations.get>;
