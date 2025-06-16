@@ -155,7 +155,7 @@ export const ChatMessage = React.memo(({ content, role }: Doc<'messages'>) => {
               <code
                 className={clsx(
                   className,
-                  'overflow-auto rounded-md bg-[#2C2632] px-1.5 py-1 text-sm'
+                  'bg-primary overflow-auto rounded-md px-1.5 py-1 text-sm'
                 )}
                 {...props}
               >
