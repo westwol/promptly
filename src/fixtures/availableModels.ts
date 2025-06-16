@@ -16,6 +16,13 @@ export const AVAILABLE_MODELS: LlmModel[] = [
     capabilities: ['vision', 'reasoning'],
   },
   {
+    name: 'GPT ImageGen',
+    model: 'gpt-image-1',
+    type: 'openai',
+    description: `Image generation v1`,
+    capabilities: ['image_generation'],
+  },
+  {
     name: 'Gemini 2.5 Flash',
     model: 'gemini-2.0-flash',
     type: 'gemini',

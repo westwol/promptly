@@ -64,8 +64,6 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
         messagesContainer.clientHeight <
       150;
 
-    console.log({ isAtBottom });
-
     if (isAtBottom || force) {
       messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'instant' });
     }
