@@ -17,14 +17,12 @@ export async function startChatHandler(
   try {
     const { messages, conversationId, model = 'gpt-3.5-turbo', attachments = [] } = request.body;
 
-    const startLlmJobParams = {
+    startLLMJob({
       messages,
       conversationId: conversationId as Id<'conversations'>,
       model,
       attachments,
-    };
-
-    startLLMJob(startLlmJobParams);
+    });
     return reply.send({ ok: true });
   } catch (error) {
     console.error('Error processing request:', error);

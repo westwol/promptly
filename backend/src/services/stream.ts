@@ -13,6 +13,7 @@ import {
   updateConversationProcessingStatus,
 } from './conversation.ts';
 import { mapAttachmentsForOpenAiSDK } from '../utils/attachments.ts';
+import { LLM_PROMPT_CONTEXT } from '../llm/context';
 
 interface Message {
   role: string;
@@ -66,7 +67,7 @@ export async function startLLMJob({
 
     const completionParams = {
       model,
-      messages: [...messages, ...attachmentMessage],
+      messages: [...LLM_PROMPT_CONTEXT, ...messages, ...attachmentMessage],
       stream: true,
     } as ChatCompletionCreateParamsStreaming;
 
