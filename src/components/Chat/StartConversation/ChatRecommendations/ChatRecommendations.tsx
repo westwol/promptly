@@ -3,6 +3,7 @@ import { first } from 'lodash';
 
 import { CHAT_STARTER_RECOMMENDATIONS } from './constants';
 import { useChatStore } from '@t3chat/store/chat';
+import { cn } from '@t3chat/lib/utils';
 
 export const ChatRecommendations = () => {
   const setContent = useChatStore((state) => state.setContent);
@@ -14,13 +15,46 @@ export const ChatRecommendations = () => {
         <div className="flex h-[calc(100vh-20rem)] items-start justify-center">
           <div className="animate-in fade-in-50 zoom-in-95 w-full space-y-6 px-2 pt-[calc(max(15vh,2.5rem))] duration-300 sm:px-8">
             <h2 className="text-3xl font-semibold">How can I help you?</h2>
+            <ul className="grid grid-cols-4">
+              {CHAT_STARTER_RECOMMENDATIONS.map((category) => {
+                const Icon = category.icon;
+                const selected = currentCategory?.label === category.label;
+                return (
+                  <button
+                    key={`conversation-starters-${category.label}`}
+                    className={cn(
+                      'bg-tertiary flex w-[100px] flex-col items-center justify-center gap-2 rounded-lg p-4 hover:opacity-80',
+                      selected && 'bg-primary'
+                    )}
+                    onClick={() => setCurrentCategory(category)}
+                  >
+                    <Icon className="max-sm:block" />
+                    <span className="text-sm font-bold">{category.label}</span>
+                  </button>
+                );
+              })}
+            </ul>
+            <ul className="mt-10 grid grid-cols-2 gap-4">
+              {currentCategory?.recommendations.map((recommendation) => (
+                <li
+                  key={`conversation-starter-${recommendation}`}
+                  className="border-primary hover:bg-primary rounded-md border p-4 text-sm"
+                  onClick={() => setContent(recommendation)}
+                >
+                  {recommendation}
+                </li>
+              ))}
+            </ul>
+          </div>
+          {/*<div className="animate-in fade-in-50 zoom-in-95 w-full space-y-6 px-2 pt-[calc(max(15vh,2.5rem))] duration-300 sm:px-8">
+            <h2 className="text-3xl font-semibold">How can I help you?</h2>
             <div className="flex flex-row flex-wrap gap-2.5 text-sm max-sm:justify-evenly">
               {CHAT_STARTER_RECOMMENDATIONS.map((category) => {
                 const Icon = category.icon;
                 return (
                   <button
                     key={`conversation-starters-${category.label}`}
-                    className="focus-visible:ring-ring [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border-reflect button-reflect text-primary-foreground dark:bg-primary/20 disabled:dark:hover:bg-primary/20 disabled:dark:active:bg-primary/20 outline-secondary/70 data-[selected=false]:bg-secondary/30 data-[selected=false]:text-secondary-foreground/90 data-[selected=false]:hover:bg-secondary flex h-9 items-center justify-center gap-1 rounded-xl bg-[rgb(162,59,103)] p-2 px-5 py-2 text-sm font-semibold whitespace-nowrap shadow outline-1 backdrop-blur-xl transition-colors hover:bg-[#d56698] focus-visible:ring-1 focus-visible:outline-none active:bg-[rgb(162,59,103)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[rgb(162,59,103)] disabled:active:bg-[rgb(162,59,103)] data-[selected=false]:outline max-sm:size-16 max-sm:flex-col sm:gap-2 sm:rounded-full dark:hover:bg-pink-800/70 dark:active:bg-pink-800/40"
+                    className="focus-visible:ring-ring [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border-reflect button-reflect text-primary-foreground dark:bg-primary/20 disabled:dark:hover:bg-primary/20 disabled:dark:active:bg-primary/20 outline-secondary/70 data-[selected=false]:bg-secondary/30 data-[selected=false]:text-secondary-foreground/90 data-[selected=false]:hover:bg-secondary flex h-9 items-center justify-center gap-1 rounded-xl p-2 px-5 py-2 text-sm font-semibold whitespace-nowrap shadow outline-1 backdrop-blur-xl transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[selected=false]:outline max-sm:size-16 max-sm:flex-col sm:gap-2 sm:rounded-full"
                     onClick={() => setCurrentCategory(category)}
                   >
                     <Icon className="max-sm:block" />
@@ -44,7 +78,7 @@ export const ChatRecommendations = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </div>*/}
         </div>
       </div>
     </div>

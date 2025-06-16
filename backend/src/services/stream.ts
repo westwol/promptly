@@ -57,7 +57,7 @@ export async function startLLMJob({
     updateConversationProcessingStatus(conversationId, true);
 
     // Generate conversation title
-    /* @ts-ignore */
+    /* @ts-expect-error normalize text content */
     generateConversationTitle(conversationId, messages[0].content[0].text);
 
     const attachmentMessage = await mapAttachmentsForOpenAiSDK(attachments || []);
