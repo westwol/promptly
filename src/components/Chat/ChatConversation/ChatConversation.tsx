@@ -3,19 +3,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useConvex, useMutation, useQuery } from 'convex/react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
+import { last } from 'lodash';
 
 import { usePreferencesStore } from '@t3chat/store/preferences';
 import { startChat } from '@t3chat/utils/api';
 import { api } from '@t3chat-convex/_generated/api';
 import { Doc } from '@t3chat-convex/_generated/dataModel';
 import { CompletedChatAttachment } from '@t3chat/interfaces/chat';
-
-import { ChatMessage } from './ChatMessage';
-import { ThinkingIndicator } from './ThinkingIndicator/ThinkingIndicator';
-import { ChatMessageInputPanel } from '../ChatMessageInputPanel';
 import { cn } from '@t3chat/lib/utils';
 import { useChatStore } from '@t3chat/store/chat';
-import { ChevronDown } from 'lucide-react';
+
+import { ChatMessage } from './ChatMessage';
+import { ThinkingIndicator } from './ThinkingIndicator';
+import { ChatMessageInputPanel } from '../ChatMessageInputPanel';
 
 const shouldDisplayThinkingIndicator = (messages: Doc<'messages'>[]) => {
   if (messages.length === 0) {
@@ -39,7 +40,23 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     conversationUuid: conversationId,
   });
 
-  const addMessageToConversation = useMutation(api.conversations.addNewMessageToConversation);
+  const addMessageToConversation = useMutation(
+    api.conversations.addNewMessageToConversation
+  ).withOptimisticUpdate((localStore) => {
+    const queryParams = {
+      conversationUuid: conversationId,
+    };
+    const currentValue = localStore.getQuery(api.conversations.getById, queryParams);
+    if (currentValue !== undefined) {
+      localStore.setQuery(api.conversations.getById, queryParams, {
+        messages: currentValue.messages,
+        conversation: {
+          ...currentValue.conversation,
+          processing: true,
+        } as Doc<'conversations'>,
+      });
+    }
+  });
 
   const [messages, setMessages] = useState<Doc<'messages'>[]>(conversationData?.messages || []);
 
@@ -74,6 +91,11 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     const preferencesStore = usePreferencesStore.getState();
 
     if (!conversationData?.conversation) {
+      return;
+    }
+
+    const lastMessage = last(messages);
+    if (conversationData.conversation.processing || lastMessage?.role === 'user') {
       return;
     }
 
@@ -249,7 +271,10 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
           </motion.button>
         )}
       </AnimatePresence>
-      <ChatMessageInputPanel onSendChatRequest={onSendRequest} />
+      <ChatMessageInputPanel
+        isProcessing={conversationData?.conversation?.processing || false}
+        onSendChatRequest={onSendRequest}
+      />
     </div>
   );
 };

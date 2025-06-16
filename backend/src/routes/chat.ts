@@ -1,10 +1,14 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 
-import { startLLMJob } from '../services/stream';
 import { Id } from '@t3chat-convex/_generated/dataModel';
-import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
+import { startLLMJob } from '../services/stream';
+import { chatStartRateLimit } from '../../index';
+import {
+  addMessageToConversation,
+  updateConversationProcessingStatus,
+} from '../services/conversation';
 
-interface ChatRequestBody {
+export interface ChatRequestBody {
   messages: Array<{ role: string; content: string }>;
   conversationId: Id<'conversations'>;
   model?: string;
@@ -24,6 +28,18 @@ export async function startChatHandler(
       attachments = [],
       reasoning,
     } = request.body;
+
+    const limit = await chatStartRateLimit(request);
+
+    if (!limit.isAllowed && limit.isExceeded) {
+      addMessageToConversation({
+        conversationId,
+        content: 'Rate limit excedded, please wait before trying again',
+        role: 'assistant',
+      });
+      updateConversationProcessingStatus(conversationId, false);
+      return reply.code(429).send('Limit exceeded');
+    }
 
     startLLMJob({
       conversationId,
