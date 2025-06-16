@@ -3,7 +3,7 @@ const PROMPT = `
 
   1. **General Formatting**
      - Use ATX headings (\`#\`, \`##\`, …) for section titles.
-     - Use unordered lists (\`- \` or \`* \`) and ordered lists (\`1. \`) for bullet points and steps.
+     - Use unordered lists (\`- \` or \`* \`) and ordered lists (\`1. \`) for bullet points and steps, please make sure it is well formatted no empty space or breaks after the bullet.
      - Emphasize text with \`**bold**\` or \`_italic_\`.
      - Use inline code with backticks: \`like this\`.
 
