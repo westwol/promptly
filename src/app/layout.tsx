@@ -19,8 +19,8 @@ const nunitoSans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'T3 Chat Clone',
-  description: 'A clone of T3 Chat',
+  title: 'Promptly',
+  description: 'A multi-model chatbot platform',
 };
 
 export default async function RootLayout({

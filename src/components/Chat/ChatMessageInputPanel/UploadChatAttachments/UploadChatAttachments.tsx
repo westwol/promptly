@@ -15,7 +15,7 @@ export const UploadChatAttachments = () => {
 
   const { startUpload, isUploading } = useUploadThing('attachments', {
     onClientUploadComplete: (attachments) => {
-      toast.success('Attachments uploaded!');
+      const { attachments: currentAttachments } = useChatStore.getState();
       setAttachments(
         currentAttachments.map((currentAttachment) => {
           const uploadedAttachment = attachments.find(
@@ -31,9 +31,10 @@ export const UploadChatAttachments = () => {
           return currentAttachment;
         })
       );
+      toast.success('Attachments uploaded');
     },
     onUploadError: () => {
-      toast.error('Error uploading attachments');
+      const { attachments: currentAttachments } = useChatStore.getState();
       setAttachments(
         currentAttachments.map((currentAttachment) => {
           return currentAttachment.status === 'uploading'
@@ -41,6 +42,7 @@ export const UploadChatAttachments = () => {
             : currentAttachment;
         })
       );
+      toast.error('Error uploading attachments');
     },
   });
 

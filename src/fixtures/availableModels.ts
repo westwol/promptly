@@ -6,7 +6,7 @@ export const AVAILABLE_MODELS: LlmModel[] = [
     model: 'gpt-3.5-turbo',
     type: 'openai',
     description: `OpenAI's fastest model`,
-    capabilities: ['reasoning'],
+    capabilities: [],
   },
   {
     name: 'o4-mini',
@@ -27,18 +27,11 @@ export const AVAILABLE_MODELS: LlmModel[] = [
     model: 'gemini-1.5-pro',
     type: 'gemini',
     description: `Google's newest experimental model`,
-    capabilities: ['vision', 'web', 'document', 'reasoning'],
+    capabilities: ['vision', 'web', 'document'],
   },
   {
     name: 'Claude 4 Sonnet',
     model: 'claude-sonnet-4-20250514',
-    type: 'anthropic',
-    description: `Anthrophic's flagship model`,
-    capabilities: ['vision', 'document'],
-  },
-  {
-    name: 'Claude 4 Sonnet (Reasoning)',
-    model: 'claude-sonnet-4-20250514_',
     type: 'anthropic',
     description: `Anthrophic's flagship model`,
     capabilities: ['vision', 'document', 'reasoning'],

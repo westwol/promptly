@@ -30,5 +30,5 @@ export const useChatStore = create<ChatStoreFields & ChatStoreMethods>()((set) =
   setWebSearch: (webSearchEnabled) => set({ webSearchEnabled }),
   setReasoning: (reasoningEnabled) => set({ reasoningEnabled }),
   setAttachments: (attachments) => set({ attachments }),
-  resetState: () => set(DEFAULT_CHAT_STORE),
+  resetState: () => set({ content: '', attachments: [] }),
 }));
