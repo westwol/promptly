@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Brain, LucideEye, LucideFileText, LucideGlobe } from 'lucide-react';
+import { Brain, LucideEye, LucideFileText, LucideGlobe, LucideImage } from 'lucide-react';
 
 import { Tooltip } from '@t3chat/components/ui';
 
@@ -8,6 +8,7 @@ const CAPABILITY_ICON_MAP: Record<string, ReactNode> = {
   web: <LucideGlobe className="h-4 w-4" />,
   document: <LucideFileText className="h-4 w-4" />,
   reasoning: <Brain className="h-4 w-4" />,
+  image_generation: <LucideImage className="h-4 w-4" />,
 };
 
 const CAPABILITY_DESCRIPTIONS: Record<string, string> = {
@@ -15,6 +16,7 @@ const CAPABILITY_DESCRIPTIONS: Record<string, string> = {
   web: 'Uses search to answer the question',
   document: 'Supports PDF uploads and analysis',
   reasoning: 'Enhanced reasoning capabilities',
+  image_generation: 'Generate images',
 };
 
 const CAPABILITY_STYLES: Record<string, { bg: string; text: string }> = {
@@ -22,6 +24,7 @@ const CAPABILITY_STYLES: Record<string, { bg: string; text: string }> = {
   web: { bg: 'var(--color-sky-500)', text: 'var(--color-sky-500)' },
   document: { bg: 'var(--color-purple-500)', text: 'var(--color-purple-500)' },
   reasoning: { bg: 'var(--color-fuchsia-500)', text: 'var(--color-fuchsia-500)' },
+  image_generation: { bg: 'var(--color-indigo-500)', text: 'var(--color-indigo-500)' },
 };
 
 interface ModelLineItemCapabilityProps {

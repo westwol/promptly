@@ -45,9 +45,14 @@ function getExtension(lang: string) {
   return map[lang] || lang;
 }
 
-export const ChatMessage = React.memo(({ content, role }: Doc<'messages'>) => {
+export const ChatMessage = React.memo(({ content, role, status }: Doc<'messages'>) => {
+  const onCopyMessage = () => {
+    navigator.clipboard.writeText(content);
+    toast('Copied to the clipboard');
+  };
+
   return (
-    <div className={cn('my-1', role === 'user' && 'bg-primary ml-auto rounded-md p-3')}>
+    <div className={cn('group my-1', role === 'user' && 'bg-primary ml-auto rounded-md p-3')}>
       <ReactMarkdown
         components={{
           ol: ({ children }) => <ol className="list-disc p-0">{children}</ol>,
@@ -135,6 +140,17 @@ export const ChatMessage = React.memo(({ content, role }: Doc<'messages'>) => {
       >
         {content}
       </ReactMarkdown>
+      {role === 'assistant' && (
+        <>
+          <button
+            className="hover:bg-primary/80 invisible mt-4 cursor-pointer items-center justify-center rounded-md p-1.5 group-hover:visible"
+            onClick={onCopyMessage}
+          >
+            <Copy size={18} />
+          </button>
+          <div className="h-[40px] w-full" />
+        </>
+      )}
     </div>
   );
 });
