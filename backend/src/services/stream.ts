@@ -54,7 +54,12 @@ export async function startLLMJob({
     // Initialize stream
     await redis.lpush(`chat:${streamId}`, JSON.stringify({ type: 'INIT' }));
 
-    messageId = await addMessageToConversation(conversationId, streamId, 'assistant');
+    messageId = await addMessageToConversation({
+      conversationId,
+      content: '',
+      streamId,
+      role: 'assistant',
+    });
 
     // Update conversation to processing
     updateConversationProcessingStatus(conversationId, true);

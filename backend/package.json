@@ -16,6 +16,7 @@
   "dependencies": {
     "@fastify/cors": "^11.0.1",
     "@fastify/multipart": "^9.0.3",
+    "@fastify/rate-limit": "^10.3.0",
     "@fastify/websocket": "^11.1.0",
     "convex": "^1.24.8",
     "dotenv": "^16.5.0",

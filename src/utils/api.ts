@@ -42,5 +42,11 @@ export const startChat = async ({
     }),
   });
 
-  return await res.json();
+  const data = await res.json();
+
+  if (!data.ok) {
+    throw new Error('Error starting chat');
+  }
+
+  return data;
 };

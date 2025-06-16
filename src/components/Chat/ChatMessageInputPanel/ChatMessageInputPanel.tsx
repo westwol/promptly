@@ -1,5 +1,3 @@
-import { FormEvent } from 'react';
-
 import { usePreferencesStore } from '@t3chat/store/preferences';
 
 import { ModelSelectionPopover } from './ModelSelectionPopover';
@@ -11,22 +9,18 @@ import { ChatSubmitButton } from './ChatSubmitButton/ChatSubmitButton';
 import { ReasoningToggle } from './ReasoningToggle';
 
 interface ChatMessageInputPanelProps {
+  isProcessing: boolean;
   onSendChatRequest: () => void;
 }
 
-export const ChatMessageInputPanel = ({ onSendChatRequest }: ChatMessageInputPanelProps) => {
+export const ChatMessageInputPanel = ({
+  isProcessing,
+  onSendChatRequest,
+}: ChatMessageInputPanelProps) => {
   const currentModel = usePreferencesStore((state) => state.model);
 
-  const onSubmitRequest = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    onSendChatRequest();
-  };
-
   return (
-    <form
-      className="text-secondary-foreground relative mx-auto flex w-full flex-col items-stretch gap-2 rounded-t-xl bg-[#1F252E] px-3 pt-3 max-sm:pb-6 sm:max-w-3xl"
-      onSubmit={onSubmitRequest}
-    >
+    <div className="text-secondary-foreground relative mx-auto flex w-full flex-col items-stretch gap-2 rounded-t-xl bg-[#1F252E] px-3 pt-3 max-sm:pb-6 sm:max-w-3xl">
       <PendingChatAttachments />
       <ChatTextArea onRequestSubmit={onSendChatRequest} />
       <div className="mb-2 flex items-center gap-2">
@@ -35,7 +29,7 @@ export const ChatMessageInputPanel = ({ onSendChatRequest }: ChatMessageInputPan
         {currentModel.capabilities.includes('web') && <WebSearchToggle />}
         {currentModel.capabilities.includes('reasoning') && <ReasoningToggle />}
       </div>
-      <ChatSubmitButton />
-    </form>
+      <ChatSubmitButton onSendChatRequest={onSendChatRequest} isProcessing={isProcessing} />
+    </div>
   );
 };

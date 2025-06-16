@@ -30,12 +30,17 @@ export async function generateConversationTitle(
   } catch {}
 }
 
-export async function addMessageToConversation(
-  conversationId: Id<'conversations'>,
-  streamId: string,
-  role: (typeof api.conversations.addNewMessageToConversation)['_args']['role'],
-  content = ''
-) {
+export async function addMessageToConversation({
+  conversationId,
+  streamId,
+  role,
+  content = '',
+}: {
+  conversationId: Id<'conversations'>;
+  role: (typeof api.conversations.addNewMessageToConversation)['_args']['role'];
+  streamId?: string;
+  content?: string;
+}) {
   return await client.mutation(api.conversations.addNewMessageToConversation, {
     conversationId,
     resumableStreamId: streamId,

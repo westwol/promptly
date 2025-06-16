@@ -49,7 +49,7 @@ export const StartConversation = () => {
   return (
     <div className="grid h-screen grid-rows-[1fr_auto]">
       <ChatRecommendations />
-      <ChatMessageInputPanel onSendChatRequest={onSendRequest} />
+      <ChatMessageInputPanel isProcessing={false} onSendChatRequest={onSendRequest} />
     </div>
   );
 };
