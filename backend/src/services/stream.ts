@@ -27,7 +27,7 @@ interface Attachment {
 
 interface ChatEvent {
   id?: number;
-  type?: 'INIT' | 'DONE' | 'MESSAGE';
+  type?: 'INIT' | 'DONE' | 'MESSAGE' | 'REASONING';
   text?: string;
 }
 
@@ -36,6 +36,7 @@ interface StartLlmJobParams {
   messages: Message[];
   model: string;
   attachments?: Attachment[];
+  reasoning: boolean;
 }
 
 export async function startLLMJob({
@@ -43,6 +44,7 @@ export async function startLLMJob({
   messages,
   model,
   attachments,
+  reasoning,
 }: StartLlmJobParams) {
   const streamId = uuidv4();
 
@@ -67,8 +69,9 @@ export async function startLLMJob({
 
     const completionParams = {
       model,
-      messages: [...LLM_PROMPT_CONTEXT, ...messages, ...attachmentMessage],
       stream: true,
+      messages: [...LLM_PROMPT_CONTEXT, ...messages, ...attachmentMessage],
+      ...(reasoning && { reasoning_effort: 'medium' }),
     } as ChatCompletionCreateParamsStreaming;
 
     switch (model) {
@@ -99,15 +102,29 @@ export async function startLLMJob({
 
     for await (const chunk of completion) {
       const text = chunk.choices?.[0]?.delta?.content;
-      if (!text) continue;
+      /* @ts-expect-error pending to check type */
+      const reasoning = chunk.choices?.[0]?.delta?.reasoning;
 
-      fullContent += text;
-      const event: ChatEvent = { id: idx++, text };
+      if (!text && !reasoning) continue;
 
-      await Promise.all([
-        redis.lpush(`chat:${streamId}`, JSON.stringify(event)),
-        redis.publish(`chat:pub:${streamId}`, JSON.stringify(event)),
-      ]);
+      if (text) {
+        fullContent += text;
+        const event: ChatEvent = { id: idx++, text };
+
+        await Promise.all([
+          redis.lpush(`chat:${streamId}`, JSON.stringify(event)),
+          redis.publish(`chat:pub:${streamId}`, JSON.stringify(event)),
+        ]);
+      }
+
+      if (reasoning) {
+        const event: ChatEvent = { id: idx++, text: reasoning, type: 'REASONING' };
+
+        await Promise.all([
+          redis.lpush(`chat:${streamId}`, JSON.stringify(event)),
+          redis.publish(`chat:pub:${streamId}`, JSON.stringify(event)),
+        ]);
+      }
     }
 
     await Promise.all([

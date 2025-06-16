@@ -24,7 +24,7 @@ export const Sidebar = ({ preloadedConversations }: SidebarProps) => {
             src="https://4ae7cyrl9i.ufs.sh/f/IDBheo8vVSXLis60Lau8myPbBM7tOixHRCuIKc4Q2UwWJXf6"
             alt="logo"
           />
-          <span className="text-lg font-bold">T3 Chat</span>
+          <span className="text-lg font-bold">Promptly</span>
         </div>
       </div>
       <NewChatButton />

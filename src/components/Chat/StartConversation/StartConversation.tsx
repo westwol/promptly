@@ -41,7 +41,8 @@ export const StartConversation = () => {
       content,
       conversationId,
       attachments,
-      model: preferencesStore.model.model,
+      model: preferencesStore.model,
+      reasoning: chatStore.reasoningEnabled,
     });
   };
 

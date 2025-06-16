@@ -1,12 +1,14 @@
 import { CompletedChatAttachment } from '@t3chat/interfaces/chat';
+import { LlmModel } from '@t3chat/interfaces/llmModels';
 
 const API_ENDPOINT = 'http://localhost:4000';
 
 interface StartChatParams {
   content: string;
   conversationId: string;
-  model: string;
+  model: LlmModel;
   attachments: CompletedChatAttachment[];
+  reasoning: boolean;
 }
 
 export const startChat = async ({
@@ -14,6 +16,7 @@ export const startChat = async ({
   conversationId,
   model,
   attachments,
+  reasoning,
 }: StartChatParams) => {
   const messages = [
     {
@@ -22,7 +25,8 @@ export const startChat = async ({
     },
   ];
 
-  console.log({ messages });
+  const canModelReason = model.capabilities.includes('reasoning');
+  const shouldIncludeAttachments = model.capabilities.includes('vision');
 
   const res = await fetch(`${API_ENDPOINT}/api/chat/start`, {
     method: 'POST',
@@ -32,8 +36,9 @@ export const startChat = async ({
     body: JSON.stringify({
       messages,
       conversationId,
-      model,
-      attachments,
+      model: model.model,
+      ...(canModelReason ? { reasoning } : {}),
+      ...(shouldIncludeAttachments ? { attachments } : { attachments: [] }),
     }),
   });
 
