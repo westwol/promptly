@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { last } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
+import { useSearchParams } from 'next/navigation';
 
 import { usePreferencesStore } from '@t3chat/store/preferences';
 import { startChat } from '@t3chat/utils/api';
@@ -25,6 +26,9 @@ interface ChatConversationProps {
 }
 
 export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
+  const searchParams = useSearchParams();
+  const isNewConversation = searchParams.get('new');
+
   const conversationData = useQuery(api.conversations.getById, {
     conversationUuid: conversationId,
   });
@@ -52,7 +56,9 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
   const currentScrollPosition = useRef<number>(0);
 
   const [messages, setMessages] = useState<Doc<'messages'>[]>(conversationData?.messages || []);
-  const [forcedThinkingIndicator, setForcedThinkingIndicator] = useState<boolean>(false);
+  const [forcedThinkingIndicator, setForcedThinkingIndicator] = useState<boolean>(
+    isNewConversation === 'true'
+  );
   const [shouldDisplayScrollToBottom, setShouldDisplayScrollToBottom] = useState<boolean>(false);
 
   const shouldShowThinkingIndicator =
