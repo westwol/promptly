@@ -1,4 +1,4 @@
-import { Id } from '@t3chat-convex/_generated/dataModel';
+import { Doc, Id } from '@t3chat-convex/_generated/dataModel';
 import { api } from '@t3chat-convex/_generated/api';
 
 import { client } from '../config/convex';
@@ -32,11 +32,15 @@ export async function generateConversationTitle(
 export async function addMessageToConversation({
   conversationId,
   streamId,
+  type,
+  status,
   role,
   content = '',
 }: {
   conversationId: Id<'conversations'>;
   role: (typeof api.conversations.addNewMessageToConversation)['_args']['role'];
+  status: (typeof api.conversations.addNewMessageToConversation)['_args']['status'];
+  type: (typeof api.conversations.addNewMessageToConversation)['_args']['type'];
   streamId?: string;
   content?: string;
 }) {
@@ -44,7 +48,8 @@ export async function addMessageToConversation({
     conversationId,
     resumableStreamId: streamId,
     role,
-    status: 'streaming',
+    type,
+    status,
     content,
   });
 }
@@ -59,9 +64,12 @@ export async function updateConversationProcessingStatus(
   });
 }
 
-export async function completeMessage(messageId: Id<'messages'>, content: string) {
-  return await client.mutation(api.conversations.completeMessage, {
+export async function updateMessage(
+  messageId: Id<'messages'>,
+  params: Partial<Omit<Doc<'messages'>, '_id'>>
+) {
+  return await client.mutation(api.conversations.updateMessage, {
     messageId,
-    content,
+    ...params,
   });
 }

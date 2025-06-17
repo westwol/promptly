@@ -31,7 +31,7 @@ export const useCreateConversation = (sessionId: string) => {
         {
           conversation: temporalConversation,
           /* @ts-expect-error we will wait to reconciliate with the backend later  */
-          messages: [{ _id: uuidv4(), role: 'user', content }],
+          messages: [{ _id: uuidv4(), role: 'user', type: 'text', content }],
         }
       );
     }

@@ -21,7 +21,7 @@ export const startChat = async ({
   const messages = [
     {
       role: 'user',
-      content: [{ type: 'text', text: content }],
+      content,
     },
   ];
 

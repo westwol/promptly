@@ -9,8 +9,9 @@ interface StreamQuery {
 
 interface ChatEvent {
   id: string;
-  type: 'INIT' | 'DONE' | 'MESSAGE';
+  type: 'INIT' | 'DONE' | 'MESSAGE' | 'IMAGE';
   text?: string;
+  imageUrl?: string;
 }
 
 export async function streamChatHandler(
@@ -47,6 +48,10 @@ export async function streamChatHandler(
         res.write(`event: done\ndata: \n\n`);
         continue;
       }
+      if (evt.type === 'IMAGE') {
+        res.write(`event: image\ndata: ${JSON.stringify({ imageUrl: evt.imageUrl })}\n\n`);
+        continue;
+      }
       res.write(`id: ${evt.id}\nevent: message\ndata: ${evt.text?.replace(/\n/g, '\\n')}\n\n`);
     }
 
@@ -65,6 +70,8 @@ export async function streamChatHandler(
         const evt = JSON.parse(message) as ChatEvent;
         if (evt.type === 'DONE') {
           res.write(`event: done\ndata: \n\n`);
+        } else if (evt.type === 'IMAGE') {
+          res.write(`event: image\ndata: ${JSON.stringify({ imageUrl: evt.imageUrl })}\n\n`);
         } else {
           res.write(`id: ${evt.id}\nevent: message\ndata: ${evt.text?.replace(/\n/g, '\\n')}\n\n`);
         }

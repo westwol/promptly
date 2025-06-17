@@ -9,10 +9,11 @@ import { openai, deepseek, anthropic, gemini } from '../config/llm.ts';
 import {
   generateConversationTitle,
   addMessageToConversation,
-  completeMessage,
   updateConversationProcessingStatus,
+  updateMessage,
 } from './conversation.ts';
 import { mapAttachmentsForOpenAiSDK } from '../utils/attachments.ts';
+import { uploadBase64Image } from '../utils/uploadthing.ts';
 import { LLM_PROMPT_CONTEXT } from '../llm/context';
 
 interface Message {
@@ -27,8 +28,9 @@ interface Attachment {
 
 interface ChatEvent {
   id?: number;
-  type?: 'INIT' | 'DONE' | 'MESSAGE' | 'REASONING';
+  type?: 'INIT' | 'DONE' | 'MESSAGE' | 'REASONING' | 'IMAGE';
   text?: string;
+  imageUrl?: string;
 }
 
 interface StartLlmJobParams {
@@ -38,6 +40,8 @@ interface StartLlmJobParams {
   attachments?: Attachment[];
   reasoning: boolean;
 }
+
+const IMAGE_GENERATION_MODELS = ['gpt-image-1'];
 
 export async function startLLMJob({
   conversationId,
@@ -50,23 +54,28 @@ export async function startLLMJob({
 
   let messageId: Id<'messages'> | undefined;
 
+  const lastMessage = messages[messages.length - 1];
+
   try {
     // Initialize stream
     await redis.lpush(`chat:${streamId}`, JSON.stringify({ type: 'INIT' }));
 
+    const isImageGeneration = IMAGE_GENERATION_MODELS.includes(model);
+
     messageId = await addMessageToConversation({
       conversationId,
       content: '',
+      type: isImageGeneration ? 'image' : 'text',
       streamId,
       role: 'assistant',
+      status: 'streaming',
     });
 
     // Update conversation to processing
     updateConversationProcessingStatus(conversationId, true);
 
     // Generate conversation title
-    /* @ts-expect-error normalize text content */
-    generateConversationTitle(conversationId, messages[0].content[0].text);
+    generateConversationTitle(conversationId, lastMessage.content);
 
     const attachmentMessage = await mapAttachmentsForOpenAiSDK(attachments || []);
 
@@ -85,6 +94,42 @@ export async function startLLMJob({
       case 'o4-mini':
         completion = await openai.chat.completions.create(completionParams);
         break;
+      case 'gpt-image-1':
+        const imageResponse = await openai.images.generate({
+          model: 'gpt-image-1',
+          prompt: lastMessage.content,
+          n: 1,
+          size: '1024x1024',
+        });
+
+        const base64Image = imageResponse.data?.[0]?.b64_json;
+
+        if (!base64Image) {
+          throw new Error('Failed generating image');
+        }
+
+        const imageUrl = await uploadBase64Image(base64Image);
+
+        const imageEvent: ChatEvent = {
+          id: 0,
+          type: 'IMAGE',
+          imageUrl,
+        };
+
+        await Promise.all([
+          redis.lpush(`chat:${streamId}`, JSON.stringify(imageEvent)),
+          redis.publish(`chat:pub:${streamId}`, JSON.stringify(imageEvent)),
+          updateMessage(messageId, { content: `![Generated Image](${imageUrl})` }),
+        ]);
+
+        // Send DONE event and skip the text streaming loop
+        await Promise.all([
+          redis.lpush(`chat:${streamId}`, JSON.stringify({ type: 'DONE' })),
+          redis.publish(`chat:pub:${streamId}`, JSON.stringify({ type: 'DONE' })),
+        ]);
+
+        completion = null;
+        break;
       case 'gemini-2.0-flash':
       case 'gemini-1.5-pro':
         completion = await gemini.chat.completions.create(completionParams);
@@ -100,6 +145,15 @@ export async function startLLMJob({
         break;
       default:
         throw new Error(`Unsupported model: ${model}`);
+    }
+
+    if (!completion) {
+      if (isImageGeneration) {
+        await redis.expire(`chat:${streamId}`, 3600);
+        return;
+      } else {
+        throw new Error('failed to generate');
+      }
     }
 
     let idx = 0;
@@ -135,27 +189,30 @@ export async function startLLMJob({
     await Promise.all([
       redis.lpush(`chat:${streamId}`, JSON.stringify({ type: 'DONE' })),
       redis.publish(`chat:pub:${streamId}`, JSON.stringify({ type: 'DONE' })),
+      // Expire redis key
+      redis.expire(`chat:${streamId}`, 3600),
+      // Complete message
+      updateMessage(messageId, { content: fullContent, status: 'complete' }),
     ]);
-
-    await completeMessage(messageId, fullContent);
-
-    // Cleanup
-    await redis.expire(`chat:${streamId}`, 3600);
   } catch (error) {
+    console.error('Stream processing error:', error);
+
     const errorPromises: Promise<unknown>[] = [
       redis.lpush(`chat:${streamId}`, JSON.stringify({ type: 'DONE' })),
       redis.publish(`chat:pub:${streamId}`, JSON.stringify({ type: 'DONE' })),
     ];
 
     if (messageId) {
-      errorPromises.push(completeMessage(messageId, 'Error processing this request please retry'));
+      errorPromises.push(
+        updateMessage(messageId, {
+          content: 'Error processing this request please retry',
+          status: 'error',
+        })
+      );
     }
-
-    console.error('Stream processing error:', error);
     await Promise.all(errorPromises);
-    throw error;
   } finally {
     // Finished processing the conversation
-    updateConversationProcessingStatus(conversationId, false);
+    await updateConversationProcessingStatus(conversationId, false);
   }
 }

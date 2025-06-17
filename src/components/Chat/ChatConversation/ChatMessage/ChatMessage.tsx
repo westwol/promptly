@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { omit } from 'lodash';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter, SyntaxHighlighterProps } from 'react-syntax-highlighter';
-import { Copy, Download } from 'lucide-react';
+import { Copy, Download, LucideImage } from 'lucide-react';
 import { toast } from 'sonner';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -45,7 +45,7 @@ function getExtension(lang: string) {
   return map[lang] || lang;
 }
 
-export const ChatMessage = React.memo(({ content, role, status }: Doc<'messages'>) => {
+export const ChatMessage = React.memo(({ content, role, type }: Doc<'messages'>) => {
   const onCopyMessage = () => {
     navigator.clipboard.writeText(content);
     toast('Copied to the clipboard');
