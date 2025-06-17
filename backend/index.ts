@@ -30,8 +30,8 @@ fastify.post('/api/chat/start', startChatHandler);
 fastify.get('/api/chat/stream', streamChatHandler);
 
 try {
-  await fastify.listen({ port: 4000 });
-  console.log('Server is running on port 4000');
+  await fastify.listen({ port: +(process.env.PORT || 4000) });
+  console.log(`Server running on ${process.env.PORT}`);
 } catch (err) {
   console.error('Error starting server:', err);
   process.exit(1);
