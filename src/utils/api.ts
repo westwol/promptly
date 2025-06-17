@@ -1,7 +1,7 @@
 import { CompletedChatAttachment } from '@t3chat/interfaces/chat';
 import { LlmModel } from '@t3chat/interfaces/llmModels';
 
-const API_ENDPOINT = 'http://localhost:4000';
+export const API_ENDPOINT = 'http://localhost:4000/api';
 
 interface StartChatParams {
   content: string;
@@ -28,7 +28,7 @@ export const startChat = async ({
   const canModelReason = model.capabilities.includes('reasoning');
   const shouldIncludeAttachments = model.capabilities.includes('vision');
 
-  const res = await fetch(`${API_ENDPOINT}/api/chat/start`, {
+  const res = await fetch(`${API_ENDPOINT}/chat/start`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

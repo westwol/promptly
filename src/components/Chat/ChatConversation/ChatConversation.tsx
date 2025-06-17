@@ -1,10 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useConvex, useMutation, useQuery } from 'convex/react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { useMutation, useQuery } from 'convex/react';
 import { last } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 
 import { usePreferencesStore } from '@t3chat/store/preferences';
 import { startChat } from '@t3chat/utils/api';
@@ -17,22 +16,15 @@ import { useChatStore } from '@t3chat/store/chat';
 import { ChatMessage } from './ChatMessage';
 import { ThinkingIndicator } from './ThinkingIndicator';
 import { ChatMessageInputPanel } from '../ChatMessageInputPanel';
-
-const shouldDisplayThinkingIndicator = (messages: Doc<'messages'>[]) => {
-  if (messages.length === 0) {
-    return false;
-  }
-
-  return messages.some((message) => message.status === 'streaming' && message.content.length === 0);
-};
+import { useChatStreamingResponse } from './useChatStreamingResponse';
+import { shouldDisplayThinkingIndicator } from './utils';
+import { ScrollToBottomPanel } from './ScrollToBottomPanel';
 
 interface ChatConversationProps {
   conversationId: string;
 }
 
 export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
-  const client = useConvex();
-
   const conversationData = useQuery(api.conversations.getById, {
     conversationUuid: conversationId,
   });
@@ -56,16 +48,15 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     });
   });
 
-  const [messages, setMessages] = useState<Doc<'messages'>[]>(conversationData?.messages || []);
-
-  const isStreamingResponse = useRef<boolean>(false);
-  const lastStreamReceived = useRef<string>('');
-  const eventSourceRef = useRef<EventSource | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const currentScrollPosition = useRef<number>(0);
+
+  const [messages, setMessages] = useState<Doc<'messages'>[]>(conversationData?.messages || []);
+  const [forcedThinkingIndicator, setForcedThinkingIndicator] = useState<boolean>(false);
   const [shouldDisplayScrollToBottom, setShouldDisplayScrollToBottom] = useState<boolean>(false);
 
-  const shouldShowThinkingIndicator = shouldDisplayThinkingIndicator(messages);
+  const shouldShowThinkingIndicator =
+    forcedThinkingIndicator || shouldDisplayThinkingIndicator(messages);
 
   const scrollToBottom = useCallback((force?: boolean) => {
     const messagesContainer = messagesContainerRef.current;
@@ -110,7 +101,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     setMessages((messages) => [
       ...messages,
       {
-        _id: 'temporal-id',
+        _id: uuidv4(),
         status: 'complete',
         role: 'user',
         content: chatStore.content,
@@ -118,6 +109,8 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
         updatedAt: currentDate,
       } as Doc<'messages'>,
     ]);
+
+    setForcedThinkingIndicator(true);
 
     startChat({
       content: chatStore.content,
@@ -130,68 +123,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     chatStore.resetState();
   };
 
-  const onStartResumableStream = (streamId: string) => {
-    // Clean up previous event source
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-    }
-
-    const eventSource = new EventSource(
-      `http://localhost:4000/api/chat/stream?streamId=${streamId}`
-    );
-
-    eventSourceRef.current = eventSource;
-    lastStreamReceived.current = streamId;
-
-    eventSource.onopen = () => {
-      isStreamingResponse.current = true;
-    };
-
-    eventSource.onmessage = (event) => {
-      setMessages((messages) => {
-        const lastMessage = messages[messages.length - 1];
-        if (lastMessage?.resumableStreamId) {
-          const updatedMessage = {
-            ...lastMessage,
-            content: lastMessage.content + event.data.replace(/\\n/g, '\n'),
-          };
-          return [...messages.slice(0, -1), updatedMessage];
-        }
-        return messages;
-      });
-    };
-
-    eventSource.addEventListener('done', () => {
-      console.log('Stream completed, closing connection');
-      eventSource.close();
-      isStreamingResponse.current = false;
-    });
-
-    eventSource.addEventListener('image', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        setMessages((messages) => {
-          const lastMessage = messages[messages.length - 1];
-          if (lastMessage?.resumableStreamId) {
-            const updatedMessage = {
-              ...lastMessage,
-              content: `![Generated Image](${data.imageUrl})`,
-            };
-            return [...messages.slice(0, -1), updatedMessage];
-          }
-          return messages;
-        });
-      } catch (error) {
-        console.error('Error processing image event:', error);
-      }
-    });
-
-    eventSource.onerror = (err) => {
-      console.error('SSE error', err);
-    };
-  };
-
-  const onScrollHander = () => {
+  const onScrollHander = useCallback(() => {
     const messagesContainer = messagesContainerRef.current;
     if (!messagesContainer) {
       return;
@@ -206,52 +138,14 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
         messagesContainer.clientHeight >
         100
     );
-  };
+  }, []);
 
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-
-    if (!lastMessage?.resumableStreamId) {
-      return;
-    }
-
-    if (lastMessage?.resumableStreamId === lastStreamReceived.current) {
-      return;
-    }
-
-    if (lastMessage?.status !== 'streaming') {
-      return;
-    }
-
-    if (isStreamingResponse.current) {
-      return;
-    }
-
-    lastStreamReceived.current = lastMessage.resumableStreamId;
-    onStartResumableStream(lastMessage.resumableStreamId);
-  }, [messages]);
-
-  useEffect(() => {
-    const watch = client.watchQuery(api.conversations.getById, {
-      conversationUuid: conversationId,
-    });
-
-    const unsubscribe = watch.onUpdate(() => {
-      try {
-        const result = watch.localQueryResult();
-        const messages = result?.messages || [];
-        const lastMessage = messages[messages.length - 1];
-        if (lastMessage?.resumableStreamId === lastStreamReceived.current) {
-          return;
-        }
-        setMessages(result?.messages || []);
-      } catch {}
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [client, conversationId]);
+  useChatStreamingResponse({
+    messages,
+    setMessages,
+    setForcedThinkingIndicator,
+    conversationUuid: conversationId,
+  });
 
   useEffect(() => {
     scrollToBottom();
@@ -276,21 +170,10 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
           {shouldShowThinkingIndicator && <ThinkingIndicator />}
         </div>
       </div>
-      <AnimatePresence>
-        {shouldDisplayScrollToBottom && (
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.2 }}
-            className="bg-primary/80 absolute bottom-30 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center gap-2 rounded-xl p-2 text-xs text-white"
-            onClick={() => scrollToBottom(true)}
-          >
-            <span className="font-bold">Scroll to the bottom</span>
-            <ChevronDown size={12} />
-          </motion.button>
-        )}
-      </AnimatePresence>
+      <ScrollToBottomPanel
+        shouldDisplayScrollToBottom={shouldDisplayScrollToBottom}
+        onScrollToBottom={() => scrollToBottom(true)}
+      />
       <ChatMessageInputPanel
         isProcessing={conversationData?.conversation?.processing || false}
         onSendChatRequest={onSendRequest}
