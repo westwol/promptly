@@ -56,7 +56,14 @@ export const UploadChatAttachments = () => {
     startUpload(files);
     setAttachments([
       ...currentAttachments,
-      ...files.map((file) => ({ name: file.name, status: 'uploading' }) as ChatAttachment),
+      ...files.map(
+        (file) =>
+          ({
+            name: file.name,
+            status: 'uploading',
+            mimeType: file.type,
+          }) as ChatAttachment
+      ),
     ]);
   };
 
@@ -69,7 +76,7 @@ export const UploadChatAttachments = () => {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.pdf,.doc,.docx,.txt"
         multiple
         className="hidden"
         onChange={onSelectAttachments}
@@ -86,7 +93,9 @@ export const UploadChatAttachments = () => {
             Attach
           </button>
         </Tooltip.Trigger>
-        <Tooltip.Content sideOffset={10}>Add an attachment: png, jpg, pdf</Tooltip.Content>
+        <Tooltip.Content sideOffset={10}>
+          Add an attachment: images, PDF, Word documents, text files
+        </Tooltip.Content>
       </Tooltip.Root>
     </>
   );

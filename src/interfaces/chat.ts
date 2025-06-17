@@ -3,6 +3,7 @@ type ChatAttachmentStatus = 'uploading' | 'completed' | 'error';
 interface ChatAttachmentBase {
   name: string;
   status: ChatAttachmentStatus;
+  mimeType: string;
 }
 
 export interface UploadingChatAttachment extends ChatAttachmentBase {
