@@ -22,7 +22,8 @@ interface Message {
 }
 
 interface Attachment {
-  type: string;
+  mimeType: string;
+  name: string;
   url: string;
 }
 

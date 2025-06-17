@@ -12,7 +12,7 @@ export interface ChatRequestBody {
   messages: Array<{ role: string; content: string }>;
   conversationId: Id<'conversations'>;
   model?: string;
-  attachments?: Array<{ type: string; url: string }>;
+  attachments?: Array<{ mimeType: string; url: string }>;
   reasoning: boolean;
 }
 
