@@ -2,10 +2,11 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/navigation';
+import { isEmpty } from 'lodash';
 
 import { useSessionStore } from '@t3chat/store/session';
 import { startChat } from '@t3chat/utils/api';
-import { usePreferencesStore } from '@t3chat/store/preferences';
+import { CustomApiKeys, usePreferencesStore } from '@t3chat/store/preferences';
 import { CompletedChatAttachment } from '@t3chat/interfaces/chat';
 import { useChatStore } from '@t3chat/store/chat';
 
@@ -40,11 +41,21 @@ export const StartConversation = () => {
       sessionId,
     });
 
+    const model = preferencesStore.model;
+    const normalizedModel = preferencesStore.model.type as keyof CustomApiKeys;
+    const isCustomApiKeyEnabled = preferencesStore.isApiKeyEnabled(normalizedModel);
+    const currentApiKeyValue = preferencesStore.getApiKey(normalizedModel);
+    const customApiKey =
+      isCustomApiKeyEnabled && !isEmpty(currentApiKeyValue)
+        ? preferencesStore.getApiKey(normalizedModel)
+        : undefined;
+
     startChat({
       content,
       conversationId,
       attachments,
-      model: preferencesStore.model,
+      model,
+      customApiKey: customApiKey,
       reasoning: chatStore.reasoningEnabled,
     });
   };

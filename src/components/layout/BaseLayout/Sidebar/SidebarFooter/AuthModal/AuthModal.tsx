@@ -43,7 +43,7 @@ export const AuthModal = () => {
           </div>
         </button>
       </Dialog.Trigger>
-      <Dialog.Content className="sm:max-w-[425px]">
+      <Dialog.Content className="outline-none sm:max-w-[425px]">
         <Dialog.Header>
           <Dialog.Title>Sign in to your account</Dialog.Title>
           <Dialog.Title className="text-muted text-sm">

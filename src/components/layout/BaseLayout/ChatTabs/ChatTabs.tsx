@@ -102,12 +102,9 @@ export const ChatTabs = ({ preloadedConversations }: ChatTabsProps) => {
                     isActive ? 'bg-secondary text-white shadow-sm' : 'bg-primary hover:bg-tertiary'
                   }`}
                 >
-                  {/* Tab content */}
                   <span className="truncate text-xs font-medium">
                     {conv.title || 'New conversation'}
                   </span>
-
-                  {/* Close button */}
                   <motion.button
                     onClick={(e) => onCloseTab(e, conv.conversationUuid)}
                     className="rounded-sm p-0.5 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-gray-600"
@@ -116,8 +113,6 @@ export const ChatTabs = ({ preloadedConversations }: ChatTabsProps) => {
                   >
                     <X size={12} className="text-gray-400 hover:text-white" />
                   </motion.button>
-
-                  {/* Active tab indicator */}
                   {isActive && (
                     <motion.div
                       className="absolute right-0 bottom-0 left-0 h-0.5 rounded-t-sm bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700"

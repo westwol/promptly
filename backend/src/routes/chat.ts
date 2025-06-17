@@ -14,6 +14,7 @@ export interface ChatRequestBody {
   model?: string;
   attachments?: Attachment[];
   reasoning: boolean;
+  customApiKey?: string;
 }
 
 export async function startChatHandler(
@@ -27,9 +28,8 @@ export async function startChatHandler(
       model = 'gpt-3.5-turbo',
       attachments = [],
       reasoning,
+      customApiKey,
     } = request.body;
-
-    console.log({ request: request.body });
 
     const limit = await chatStartRateLimit(request);
 
@@ -51,6 +51,7 @@ export async function startChatHandler(
       model,
       attachments,
       reasoning,
+      customApiKey,
     });
     return reply.send({ ok: true });
   } catch (error) {

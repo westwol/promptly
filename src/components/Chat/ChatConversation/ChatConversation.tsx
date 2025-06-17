@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
-import { last } from 'lodash';
+import { isEmpty, last } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import { useSearchParams } from 'next/navigation';
 
-import { usePreferencesStore } from '@t3chat/store/preferences';
+import { CustomApiKeys, usePreferencesStore } from '@t3chat/store/preferences';
 import { startChat } from '@t3chat/utils/api';
 import { api } from '@t3chat-convex/_generated/api';
 import { Doc } from '@t3chat-convex/_generated/dataModel';
@@ -118,12 +118,22 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
 
     setForcedThinkingIndicator(true);
 
+    const model = preferencesStore.model;
+    const normalizedModel = preferencesStore.model.type as keyof CustomApiKeys;
+    const isCustomApiKeyEnabled = preferencesStore.isApiKeyEnabled(normalizedModel);
+    const currentApiKeyValue = preferencesStore.getApiKey(normalizedModel);
+    const customApiKey =
+      isCustomApiKeyEnabled && !isEmpty(currentApiKeyValue)
+        ? preferencesStore.getApiKey(normalizedModel)
+        : undefined;
+
     startChat({
       content: chatStore.content,
       conversationId: conversationData.conversation._id,
-      model: preferencesStore.model,
       attachments: chatStore.attachments as CompletedChatAttachment[],
       reasoning: chatStore.reasoningEnabled,
+      model,
+      customApiKey,
     });
 
     chatStore.resetState();

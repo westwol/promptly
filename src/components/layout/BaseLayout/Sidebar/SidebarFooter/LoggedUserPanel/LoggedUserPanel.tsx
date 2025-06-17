@@ -3,6 +3,7 @@ import { LogOut } from 'lucide-react';
 import { useClerk } from '@clerk/nextjs';
 
 import { Popover } from '@t3chat/components/ui';
+import { CustomApiKeyModal } from './CustomApiKeyModal';
 
 export const LoggedUserPanel = () => {
   const { signOut, user } = useClerk();
@@ -37,9 +38,10 @@ export const LoggedUserPanel = () => {
         side="top"
         align="start"
         sideOffset={5}
-        className="bg-secondary w-[var(--radix-popover-trigger-width)] border-0 p-1.5"
+        className="bg-secondary w-[var(--radix-popover-trigger-width)] border-0 p-1.5 outline-none"
       >
         <ul>
+          <CustomApiKeyModal />
           <li
             className="hover:bg-primary flex items-center gap-2 rounded-md p-2 text-sm transition-all hover:opacity-70"
             onClick={onLogout}

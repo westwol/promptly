@@ -9,6 +9,7 @@ interface StartChatParams {
   model: LlmModel;
   attachments: CompletedChatAttachment[];
   reasoning: boolean;
+  customApiKey?: string;
 }
 
 export const startChat = async ({
@@ -17,6 +18,7 @@ export const startChat = async ({
   model,
   attachments,
   reasoning,
+  customApiKey,
 }: StartChatParams) => {
   const messages = [
     {
@@ -27,6 +29,8 @@ export const startChat = async ({
 
   const canModelReason = model.capabilities.includes('reasoning');
   const shouldIncludeAttachments = model.capabilities.includes('vision');
+
+  console.log({ customApiKey });
 
   const res = await fetch(`${API_ENDPOINT}/chat/start`, {
     method: 'POST',
@@ -39,6 +43,7 @@ export const startChat = async ({
       model: model.model,
       ...(canModelReason ? { reasoning } : {}),
       ...(shouldIncludeAttachments ? { attachments } : { attachments: [] }),
+      ...(customApiKey && { customApiKey }),
     }),
   });
 
