@@ -2,7 +2,7 @@
 
 import { PropsWithChildren, useRef, useState } from 'react';
 import { Preloaded } from 'convex/react';
-import { ChevronLeft, ChevronRight, Menu, Plus } from 'lucide-react';
+import { Menu, Plus } from 'lucide-react';
 
 import {
   ResizablePanelGroup,

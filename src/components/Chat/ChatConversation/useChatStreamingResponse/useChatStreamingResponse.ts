@@ -86,6 +86,7 @@ export const useChatStreamingResponse = ({
     eventSource.onerror = (err) => {
       console.error('SSE error', err);
     };
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -131,6 +132,7 @@ export const useChatStreamingResponse = ({
     return () => {
       unsubscribe();
     };
+    // eslint-disable-next-line
   }, [client, conversationUuid]);
 
   return {};
