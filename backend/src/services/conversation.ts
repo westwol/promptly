@@ -9,7 +9,6 @@ export async function generateConversationTitle(
   content: string
 ) {
   try {
-    console.log({ content });
     const titleCompletion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
@@ -54,7 +53,7 @@ export async function updateConversationProcessingStatus(
   conversationId: Id<'conversations'>,
   processing: boolean
 ) {
-  return await client.mutation(api.conversations.updateProcessingStatus, {
+  return await client.mutation(api.conversations.updateConversation, {
     conversationId,
     processing,
   });

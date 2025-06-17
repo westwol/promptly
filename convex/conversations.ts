@@ -14,6 +14,7 @@ export const get = query({
       return await ctx.db
         .query('conversations')
         .filter((q) => q.eq(q.field('userId'), userId))
+        .filter((q) => q.neq(q.field('deleted'), true))
         .order('desc')
         .collect();
     }
@@ -80,12 +81,15 @@ export const createInitialConversation = mutation({
 export const updateConversation = mutation({
   args: {
     conversationId: v.id('conversations'),
-    title: v.string(),
+    title: v.optional(v.string()),
+    processing: v.optional(v.boolean()),
+    pinned: v.optional(v.boolean()),
+    deleted: v.optional(v.boolean()),
   },
-  handler: async (ctx, { conversationId, title }) => {
+  handler: async (ctx, { conversationId, ...conversationParams }) => {
     const currentDate = new Date().toISOString();
     await ctx.db.patch(conversationId, {
-      title,
+      ...conversationParams,
       updatedAt: currentDate,
     });
   },
@@ -111,20 +115,6 @@ export const addNewMessageToConversation = mutation({
       updatedAt: currentDate,
     });
     return messageId;
-  },
-});
-
-export const updateProcessingStatus = mutation({
-  args: {
-    conversationId: v.id('conversations'),
-    processing: v.boolean(),
-  },
-  handler: async (ctx, { conversationId, processing }) => {
-    const currentDate = new Date().toISOString();
-    await ctx.db.patch(conversationId, {
-      processing,
-      updatedAt: currentDate,
-    });
   },
 });
 

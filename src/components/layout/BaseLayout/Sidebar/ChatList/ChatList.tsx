@@ -6,8 +6,8 @@ import { Preloaded, usePreloadedQuery } from 'convex/react';
 
 import { api } from '@t3chat-convex/_generated/api';
 
-import { ChatListItem } from './ChatListItem';
 import { groupConversationsByCategory } from './utils';
+import { ChatListGroup } from './ChatListGroup';
 
 interface ChatListProps {
   preloadedConversations: Preloaded<typeof api.conversations.get>;
@@ -55,7 +55,7 @@ export const ChatList = ({ preloadedConversations }: ChatListProps) => {
       </div>
       <ul className="mt-2 flex flex-1 flex-col gap-4 text-white">
         {Object.keys(groupedConversations).map((key) => (
-          <ChatListItem
+          <ChatListGroup
             key={`chat-list-group-${key}`}
             label={key}
             conversations={groupedConversations[key]}
