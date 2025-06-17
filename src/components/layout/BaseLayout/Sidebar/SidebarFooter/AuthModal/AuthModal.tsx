@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import Image from 'next/image';
 import { useSignIn } from '@clerk/nextjs';
 
 import { Dialog } from '@t3chat/components/ui';
@@ -28,7 +29,14 @@ export const AuthModal = () => {
     <Dialog.Root>
       <Dialog.Trigger asChild>
         <button className="hover:bg-tertiary mb-2 flex w-full items-center gap-2 rounded-md border-transparent p-2 text-start text-white outline-0 hover:shadow-md">
-          <img src={RANDOM_AVATAR_URL} className="h-8 w-8 rounded-full" />
+          <Image
+            alt="avatar"
+            height={32}
+            width={32}
+            src={RANDOM_AVATAR_URL}
+            className="rounded-full"
+            unoptimized
+          />
           <div className="flex flex-col">
             <span className="text-sm">Anonymous</span>
             <span className="text-xs text-gray-400">Limited</span>

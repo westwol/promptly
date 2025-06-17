@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { LogOut } from 'lucide-react';
 import { useClerk } from '@clerk/nextjs';
 
@@ -18,7 +19,14 @@ export const LoggedUserPanel = () => {
     <Popover.Root>
       <Popover.Trigger asChild>
         <button className="hover:bg-tertiary mb-2 flex w-full items-center gap-2 rounded-md border-transparent p-2 text-start text-white hover:shadow-md">
-          <img src={user?.imageUrl} className="h-8 w-8 rounded-full" />
+          <Image
+            alt="avatar"
+            height={32}
+            width={32}
+            src={user?.imageUrl || ''}
+            className="rounded-full"
+            unoptimized
+          />
           <div className="flex flex-col">
             <span className="text-sm">{user?.fullName}</span>
             <span className="text-xs text-gray-400">Pro</span>

@@ -20,7 +20,7 @@ export const ChatMessageInputPanel = ({
   const currentModel = usePreferencesStore((state) => state.model);
 
   return (
-    <div className="text-secondary-foreground relative mx-auto flex w-full flex-col items-stretch gap-2 rounded-t-xl bg-[#1F252E] px-3 pt-3 max-sm:pb-6 sm:max-w-3xl">
+    <div className="bg-input relative mx-auto flex w-full flex-col items-stretch gap-2 rounded-t-xl px-3 pt-3 shadow-sm max-sm:pb-6 sm:max-w-3xl">
       <PendingChatAttachments />
       <ChatTextArea onRequestSubmit={onSendChatRequest} />
       <div className="mb-2 flex items-center gap-2">

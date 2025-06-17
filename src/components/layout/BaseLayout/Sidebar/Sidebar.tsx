@@ -16,8 +16,8 @@ interface SidebarProps {
 export const Sidebar = ({ preloadedConversations }: SidebarProps) => {
   return (
     <div className="bg-primary relative flex h-screen flex-col transition-all duration-200">
-      <div className="flex items-center justify-between p-6">
-        <div className="flex items-center gap-2 text-white">
+      <div className="flex items-center justify-between pt-4 pb-6">
+        <div className="flex w-full items-center justify-center gap-1 text-white">
           <Image
             width={45}
             height={45}
