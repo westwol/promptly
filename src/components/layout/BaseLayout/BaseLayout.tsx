@@ -3,6 +3,7 @@
 import { PropsWithChildren, useRef, useState } from 'react';
 import { Preloaded } from 'convex/react';
 import { Menu, Plus } from 'lucide-react';
+import Link from 'next/link';
 
 import {
   ResizablePanelGroup,
@@ -13,7 +14,7 @@ import { api } from '@t3chat-convex/_generated/api';
 import { ImperativePanelHandle } from 'react-resizable-panels';
 
 import { Sidebar } from './Sidebar';
-import Link from 'next/link';
+import { ChatTabs } from './ChatTabs/ChatTabs';
 
 interface BaseLayoutProps {
   preloadedConversations: Preloaded<typeof api.conversations.get>;
@@ -54,7 +55,10 @@ export const BaseLayout = ({
         </ResizablePanel>
         {!isCollapsed && <ResizableHandle className="bg-secondary handle-animate w-1" />}
         <ResizablePanel id="right-panel" defaultSize={83} className="panel-animate">
-          <div className="bg-secondary panel-content h-screen overflow-auto">{children}</div>
+          <div className="bg-secondary panel-content relative h-screen overflow-auto">
+            <ChatTabs preloadedConversations={preloadedConversations} />
+            {children}
+          </div>
         </ResizablePanel>
       </ResizablePanelGroup>
       <div className="fixed top-[20px] left-[24px] z-[20] rounded-md">

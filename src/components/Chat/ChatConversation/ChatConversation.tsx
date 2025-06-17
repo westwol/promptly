@@ -152,7 +152,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
   }, [messages, scrollToBottom]);
 
   return (
-    <div className="relative grid h-screen grid-rows-[1fr_auto]">
+    <div className="relative grid h-screen grid-rows-[1fr_auto] pt-10">
       <div
         ref={messagesContainerRef}
         className="overflow-auto scroll-auto"
