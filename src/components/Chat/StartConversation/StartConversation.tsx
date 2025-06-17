@@ -29,6 +29,9 @@ export const StartConversation = () => {
 
     chatStore.resetState();
 
+    // Add the new conversation to recent chats
+    preferencesStore.addToRecentChats(generatedConversationId);
+
     router.push(`/conversations/${generatedConversationId}`);
 
     const conversationId = await createInitialConversation({

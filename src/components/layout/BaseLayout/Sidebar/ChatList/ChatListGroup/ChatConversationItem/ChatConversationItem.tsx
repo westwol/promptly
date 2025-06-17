@@ -8,6 +8,7 @@ import { api } from '@t3chat-convex/_generated/api';
 import { Doc } from '@t3chat-convex/_generated/dataModel';
 import { Spinner } from '@t3chat/components/ui';
 import { useSessionStore } from '@t3chat/store/session';
+import { usePreferencesStore } from '@t3chat/store/preferences';
 
 const CONTAINER_ANIMATION_PROPS: HTMLMotionProps<'div'> = {
   initial: { opacity: 0, x: -20 },
@@ -29,6 +30,7 @@ const BUTTON_ANIMATION_PROPS: HTMLMotionProps<'div'> = {
 export const ChatConversationItem = (conversation: Doc<'conversations'>) => {
   const pathname = usePathname();
   const sessionId = useSessionStore((state) => state.sessionId);
+  const addToRecentChats = usePreferencesStore((state) => state.addToRecentChats);
   const isSelected = pathname === `/conversations/${conversation.conversationUuid}`;
 
   const updateConversation = useMutation(api.conversations.updateConversation).withOptimisticUpdate(
@@ -59,6 +61,7 @@ export const ChatConversationItem = (conversation: Doc<'conversations'>) => {
           } relative overflow-hidden`}
           href={`/conversations/${conversation.conversationUuid}`}
           prefetch={true}
+          onClick={() => addToRecentChats(conversation.conversationUuid)}
         >
           <span className="truncate">{conversation.title || 'New conversation'}</span>
           {conversation.processing && <Spinner />}
