@@ -9,12 +9,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@t3chat-convex/_generated/api';
 import { Doc } from '@t3chat-convex/_generated/dataModel';
 import { usePreferencesStore } from '@t3chat/store/preferences';
+import { cn } from '@t3chat/lib/utils';
 
 interface ChatTabsProps {
+  isCollapsed: boolean;
   preloadedConversations: Preloaded<typeof api.conversations.get>;
 }
 
-export const ChatTabs = ({ preloadedConversations }: ChatTabsProps) => {
+export const ChatTabs = ({ isCollapsed, preloadedConversations }: ChatTabsProps) => {
   const conversations = usePreloadedQuery(preloadedConversations);
   const recentChats = usePreferencesStore((state) => state.recentChats);
   const removeFromRecentChats = usePreferencesStore((state) => state.removeFromRecentChats);
@@ -54,7 +56,7 @@ export const ChatTabs = ({ preloadedConversations }: ChatTabsProps) => {
   };
 
   return (
-    <div className="bg-secondary absolute left-0 z-[20]">
+    <div className={cn('bg-secondary absolute left-0 z-[20]', isCollapsed && 'left-[100px]')}>
       <div className="scroll-x-auto scrollbar-hide flex items-end gap-0.5 overflow-auto px-2 py-1">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
