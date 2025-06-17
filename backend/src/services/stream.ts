@@ -2,18 +2,18 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { ChatCompletionCreateParamsStreaming } from 'openai/resources/index.js';
 
-import { Id } from '@t3chat-convex/_generated/dataModel.js';
+import { Id } from '@t3chat-convex/_generated/dataModel';
 
-import { redis } from '../config/redis.ts';
-import { openai, deepseek, anthropic, gemini, createCustomLlmClient } from '../config/llm.ts';
+import { redis } from '../config/redis';
+import { openai, deepseek, anthropic, gemini, createCustomLlmClient } from '../config/llm';
 import {
   generateConversationTitle,
   addMessageToConversation,
   updateConversationProcessingStatus,
   updateMessage,
-} from './conversation.ts';
-import { mapAttachmentsForOpenAiSDK } from '../utils/attachments.ts';
-import { uploadBase64Image } from '../utils/uploadthing.ts';
+} from './conversation';
+import { mapAttachmentsForOpenAiSDK } from '../utils/attachments';
+import { uploadBase64Image } from '../utils/uploadthing';
 import { LLM_PROMPT_CONTEXT } from '../llm/context';
 
 interface Message {

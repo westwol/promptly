@@ -12,7 +12,6 @@
 
 # backend dependencies
 /backend/node_modules
-/convex/_generated
 
 # testing
 /coverage
