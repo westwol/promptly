@@ -22,11 +22,8 @@ const shouldDisplayThinkingIndicator = (messages: Doc<'messages'>[]) => {
   if (messages.length === 0) {
     return false;
   }
-  const lastMessage = messages[messages.length - 1];
-  return (
-    (lastMessage.status === 'streaming' && lastMessage.content.length === 0) ||
-    lastMessage.role === 'user'
-  );
+
+  return messages.some((message) => message.status === 'streaming' && message.content.length === 0);
 };
 
 interface ChatConversationProps {
@@ -46,16 +43,17 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     const queryParams = {
       conversationUuid: conversationId,
     };
-    const currentValue = localStore.getQuery(api.conversations.getById, queryParams);
-    if (currentValue !== undefined) {
-      localStore.setQuery(api.conversations.getById, queryParams, {
-        messages: currentValue.messages,
-        conversation: {
-          ...currentValue.conversation,
-          processing: true,
-        } as Doc<'conversations'>,
-      });
+    const conversation = localStore.getQuery(api.conversations.getById, queryParams);
+    if (!conversation) {
+      return;
     }
+    localStore.setQuery(api.conversations.getById, queryParams, {
+      messages: conversation.messages,
+      conversation: {
+        ...conversation.conversation,
+        processing: true,
+      } as Doc<'conversations'>,
+    });
   });
 
   const [messages, setMessages] = useState<Doc<'messages'>[]>(conversationData?.messages || []);
@@ -102,6 +100,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     addMessageToConversation({
       conversationId: conversationData.conversation._id,
       content: chatStore.content,
+      type: 'text',
       role: 'user',
       status: 'complete',
     });
@@ -168,6 +167,25 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       isStreamingResponse.current = false;
     });
 
+    eventSource.addEventListener('image', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        setMessages((messages) => {
+          const lastMessage = messages[messages.length - 1];
+          if (lastMessage?.resumableStreamId) {
+            const updatedMessage = {
+              ...lastMessage,
+              content: `![Generated Image](${data.imageUrl})`,
+            };
+            return [...messages.slice(0, -1), updatedMessage];
+          }
+          return messages;
+        });
+      } catch (error) {
+        console.error('Error processing image event:', error);
+      }
+    });
+
     eventSource.onerror = (err) => {
       console.error('SSE error', err);
     };
@@ -219,13 +237,15 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     });
 
     const unsubscribe = watch.onUpdate(() => {
-      const result = watch.localQueryResult();
-      const messages = result?.messages || [];
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage?.resumableStreamId === lastStreamReceived.current) {
-        return;
-      }
-      setMessages(result?.messages || []);
+      try {
+        const result = watch.localQueryResult();
+        const messages = result?.messages || [];
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage?.resumableStreamId === lastStreamReceived.current) {
+          return;
+        }
+        setMessages(result?.messages || []);
+      } catch {}
     });
 
     return () => {

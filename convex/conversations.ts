@@ -69,6 +69,7 @@ export const createInitialConversation = mutation({
       conversationId: newConversationId,
       content,
       status: 'complete',
+      type: 'text',
       role: 'user',
       createdAt: currentDate,
       updatedAt: currentDate,
@@ -100,21 +101,46 @@ export const addNewMessageToConversation = mutation({
     conversationId: v.id('conversations'),
     resumableStreamId: v.optional(v.string()),
     role: v.union(v.literal('user'), v.literal('assistant'), v.literal('system')),
-    status: v.union(v.literal('pending'), v.literal('streaming'), v.literal('complete')),
+    type: v.union(v.literal('text'), v.literal('image')),
+    status: v.union(
+      v.literal('pending'),
+      v.literal('streaming'),
+      v.literal('complete'),
+      v.literal('error')
+    ),
     content: v.string(),
   },
-  handler: async (ctx, { conversationId, status, resumableStreamId, role, content }) => {
+  handler: async (ctx, messageParams) => {
     const currentDate = new Date().toISOString();
     const messageId = await ctx.db.insert('messages', {
-      conversationId,
-      content,
-      status,
-      resumableStreamId,
-      role,
-      createdAt: currentDate,
+      ...messageParams,
       updatedAt: currentDate,
+      createdAt: currentDate,
     });
     return messageId;
+  },
+});
+
+export const updateMessage = mutation({
+  args: {
+    messageId: v.id('messages'),
+    content: v.optional(v.string()),
+    role: v.optional(v.union(v.literal('user'), v.literal('assistant'), v.literal('system'))),
+    status: v.optional(
+      v.union(
+        v.literal('pending'),
+        v.literal('streaming'),
+        v.literal('complete'),
+        v.literal('error')
+      )
+    ),
+  },
+  handler: async (ctx, { messageId, ...conversationParams }) => {
+    const currentDate = new Date().toISOString();
+    await ctx.db.patch(messageId, {
+      ...conversationParams,
+      updatedAt: currentDate,
+    });
   },
 });
 

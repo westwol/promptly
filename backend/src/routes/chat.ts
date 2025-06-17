@@ -35,7 +35,9 @@ export async function startChatHandler(
       addMessageToConversation({
         conversationId,
         content: 'Rate limit excedded, please wait before trying again',
+        type: 'text',
         role: 'assistant',
+        status: 'error',
       });
       updateConversationProcessingStatus(conversationId, false);
       return reply.code(429).send('Limit exceeded');
