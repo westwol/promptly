@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import Redis from 'ioredis';
 
-import { redis } from '../config/redis.ts';
+import { redis } from '../config/redis';
 
 interface StreamQuery {
   streamId: string;
