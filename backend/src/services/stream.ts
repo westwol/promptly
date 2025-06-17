@@ -5,7 +5,7 @@ import { ChatCompletionCreateParamsStreaming } from 'openai/resources/index.js';
 import { Id } from '@t3chat-convex/_generated/dataModel.js';
 
 import { redis } from '../config/redis.ts';
-import { openai, deepseek, anthropic, gemini } from '../config/llm.ts';
+import { openai, deepseek, anthropic, gemini, createCustomLlmClient } from '../config/llm.ts';
 import {
   generateConversationTitle,
   addMessageToConversation,
@@ -40,6 +40,7 @@ interface StartLlmJobParams {
   model: string;
   attachments?: Attachment[];
   reasoning: boolean;
+  customApiKey?: string;
 }
 
 const IMAGE_GENERATION_MODELS = ['gpt-image-1'];
@@ -50,6 +51,7 @@ export async function startLLMJob({
   model,
   attachments,
   reasoning,
+  customApiKey,
 }: StartLlmJobParams) {
   const streamId = uuidv4();
 
@@ -89,14 +91,18 @@ export async function startLLMJob({
       ...(reasoning && { reasoning_effort: 'medium' }),
     } as ChatCompletionCreateParamsStreaming;
 
+    console.log({ customApiKey });
+
+    const llmClient = customApiKey ? createCustomLlmClient(customApiKey, model) : openai;
+
     switch (model) {
       case 'gpt-3.5-turbo':
       case 'gpt-4':
       case 'o4-mini':
-        completion = await openai.chat.completions.create(completionParams);
+        completion = await llmClient.chat.completions.create(completionParams);
         break;
       case 'gpt-image-1':
-        const imageResponse = await openai.images.generate({
+        const imageResponse = await llmClient.images.generate({
           model: 'gpt-image-1',
           prompt: lastMessage.content,
           n: 1,
