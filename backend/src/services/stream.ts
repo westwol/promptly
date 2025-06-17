@@ -21,7 +21,7 @@ interface Message {
   content: string;
 }
 
-interface Attachment {
+export interface Attachment {
   mimeType: string;
   name: string;
   url: string;

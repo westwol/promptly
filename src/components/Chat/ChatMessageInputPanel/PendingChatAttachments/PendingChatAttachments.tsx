@@ -5,6 +5,7 @@ import { Spinner, Tooltip } from '@t3chat/components/ui';
 import { useChatStore } from '@t3chat/store/chat';
 
 import { groupAttachments } from './utils';
+import Image from 'next/image';
 
 const getFileIcon = (mimeType: string) => {
   if (mimeType.startsWith('image/')) {
@@ -43,7 +44,14 @@ export const PendingChatAttachments = () => {
                 key={attachment.name}
               >
                 {attachment.mimeType.startsWith('image/') ? (
-                  <img src={attachment.url} className="h-16 w-16 rounded-md object-cover" />
+                  <Image
+                    src={attachment.url}
+                    alt="Attachment"
+                    width={64}
+                    height={64}
+                    className="rounded-md object-cover"
+                    unoptimized
+                  />
                 ) : (
                   <div className="flex h-16 w-16 items-center justify-center rounded-md bg-gray-700">
                     {getFileIcon(attachment.mimeType)}

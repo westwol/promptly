@@ -15,8 +15,11 @@ interface ChatListProps {
 
 export const ChatList = ({ preloadedConversations }: ChatListProps) => {
   const conversations = usePreloadedQuery(preloadedConversations);
+
   const [isPending, startTransition] = useTransition();
   const [conversationSearchQuery, setConversationSearchQuery] = useState<string>('');
+
+  console.log({ isPending });
 
   const groupedConversations = useMemo(() => {
     const query = conversationSearchQuery.trim().toLocaleLowerCase();
