@@ -32,7 +32,7 @@ export const StartConversation = () => {
     // Add the new conversation to recent chats
     preferencesStore.addToRecentChats(generatedConversationId);
 
-    router.push(`/conversations/${generatedConversationId}`);
+    router.push(`/conversations/${generatedConversationId}?new=true`);
 
     const conversationId = await createInitialConversation({
       conversationId: generatedConversationId,
