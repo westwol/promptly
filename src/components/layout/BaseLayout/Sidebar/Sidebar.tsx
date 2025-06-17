@@ -18,12 +18,7 @@ export const Sidebar = ({ preloadedConversations }: SidebarProps) => {
     <div className="bg-primary relative flex h-screen flex-col transition-all duration-200">
       <div className="flex items-center justify-between pt-4 pb-6">
         <div className="flex w-full items-center justify-center gap-1 text-white">
-          <Image
-            width={45}
-            height={45}
-            src="https://4ae7cyrl9i.ufs.sh/f/IDBheo8vVSXLis60Lau8myPbBM7tOixHRCuIKc4Q2UwWJXf6"
-            alt="logo"
-          />
+          <Image width={45} height={45} src="/logo.png" alt="logo" />
           <span className="text-lg font-bold">Promptly</span>
         </div>
       </div>

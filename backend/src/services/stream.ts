@@ -91,8 +91,6 @@ export async function startLLMJob({
       ...(reasoning && { reasoning_effort: 'medium' }),
     } as ChatCompletionCreateParamsStreaming;
 
-    console.log({ customApiKey });
-
     const llmClient = customApiKey ? createCustomLlmClient(customApiKey, model) : openai;
 
     switch (model) {

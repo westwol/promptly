@@ -2,8 +2,7 @@
 
 import { PropsWithChildren, useRef, useState } from 'react';
 import { Preloaded } from 'convex/react';
-import { Menu, Plus } from 'lucide-react';
-import Link from 'next/link';
+import { Menu } from 'lucide-react';
 
 import {
   ResizablePanelGroup,
@@ -56,7 +55,7 @@ export const BaseLayout = ({
         {!isCollapsed && <ResizableHandle className="bg-secondary handle-animate w-1" />}
         <ResizablePanel id="right-panel" defaultSize={83} className="panel-animate">
           <div className="bg-secondary panel-content relative h-screen overflow-auto">
-            <ChatTabs preloadedConversations={preloadedConversations} />
+            <ChatTabs isCollapsed={isCollapsed} preloadedConversations={preloadedConversations} />
             {children}
           </div>
         </ResizablePanel>
@@ -69,14 +68,6 @@ export const BaseLayout = ({
           >
             <Menu color="white" size={20} />
           </button>
-          {isCollapsed && (
-            <Link
-              href="/"
-              className="hover:bg-tertiary animate-slide-in-left cursor-pointer rounded-sm p-1.5 transition-colors"
-            >
-              <Plus color="white" size={20} />
-            </Link>
-          )}
         </div>
       </div>
     </>
