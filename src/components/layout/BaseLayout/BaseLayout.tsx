@@ -40,17 +40,20 @@ export const BaseLayout = ({
     <>
       <ResizablePanelGroup direction="horizontal" className="panel-animate">
         <ResizablePanel
+          id="left-panel"
           ref={resizablePanel}
           collapsible
           defaultSize={17}
           minSize={17}
-          maxSize={50}
+          maxSize={30}
           className="panel-animate"
+          onCollapse={() => setIsCollapsed(true)}
+          onExpand={() => setIsCollapsed(false)}
         >
           <Sidebar preloadedConversations={preloadedConversations} />
         </ResizablePanel>
         {!isCollapsed && <ResizableHandle className="bg-secondary handle-animate w-1" />}
-        <ResizablePanel defaultSize={80} className="panel-animate">
+        <ResizablePanel id="right-panel" defaultSize={83} className="panel-animate">
           <div className="bg-secondary panel-content h-screen overflow-auto">{children}</div>
         </ResizablePanel>
       </ResizablePanelGroup>

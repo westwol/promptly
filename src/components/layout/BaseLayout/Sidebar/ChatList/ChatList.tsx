@@ -45,7 +45,7 @@ export const ChatList = ({ preloadedConversations }: ChatListProps) => {
   };
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto px-6">
+    <div className="scrollbar-hide flex h-full flex-col overflow-y-auto px-6">
       <div className="border-chat-border mt-2 mb-2 flex items-center border-b px-3">
         <LucideSearch className="mr-3 ml-px size-4 text-white" />
         <input
