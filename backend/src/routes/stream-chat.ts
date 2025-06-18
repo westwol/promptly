@@ -37,7 +37,7 @@ export async function streamChatHandler(
   try {
     // Get existing events
     const rawList = await redis.lrange(`chat:${streamId}`, 0, -1);
-    const events = rawList.map((item) => JSON.parse(item) as ChatEvent).reverse();
+    const events = rawList.map((item: string) => JSON.parse(item) as ChatEvent).reverse();
 
     // Send existing events
     for (const evt of events) {
@@ -60,7 +60,7 @@ export async function streamChatHandler(
 
     await sub.subscribe(`chat:pub:${streamId}`);
 
-    sub.on('message', (_chan, message) => {
+    sub.on('message', (_chan: string, message: string) => {
       if (!isClientConnected) return;
 
       try {

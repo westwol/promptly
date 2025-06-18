@@ -1,7 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { ChatCompletionCreateParamsStreaming } from 'openai/resources/index.js';
-
 import { Id } from '@t3chat-convex/_generated/dataModel';
 
 import { redis } from '../config/redis';
@@ -82,14 +80,14 @@ export async function startLLMJob({
 
     const attachmentMessage = await mapAttachmentsForOpenAiSDK(attachments || []);
 
-    let completion;
+    let completion: any;
 
     const completionParams = {
       model,
       stream: true,
       messages: [...LLM_PROMPT_CONTEXT, ...messages, ...attachmentMessage],
       ...(reasoning && { reasoning_effort: 'medium' }),
-    } as ChatCompletionCreateParamsStreaming;
+    } as any;
 
     const llmClient = customApiKey ? createCustomLlmClient(customApiKey, model) : openai;
 
@@ -166,8 +164,7 @@ export async function startLLMJob({
 
     for await (const chunk of completion) {
       const text = chunk.choices?.[0]?.delta?.content;
-      /* @ts-expect-error pending to check type */
-      const reasoning = chunk.choices?.[0]?.delta?.reasoning;
+      const reasoning = (chunk.choices?.[0]?.delta as any)?.reasoning;
 
       if (!text && !reasoning) continue;
 
