@@ -29,7 +29,16 @@ export const chatStartRateLimit = async (request: any) => {
 };
 
 const runApp = async () => {
-  await fastify.register(cors, { origin: true });
+  await fastify.register(cors, {
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  });
+
+  // Health check endpoint
+  fastify.get('/health', async (request, reply) => {
+    return { status: 'ok', timestamp: new Date().toISOString() };
+  });
 
   fastify.post('/api/chat/start', startChatHandler);
   fastify.get('/api/chat/stream', streamChatHandler);
