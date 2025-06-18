@@ -32,7 +32,7 @@ class WorkerPool {
   constructor() {
     // Create a Piscina pool with the LLM worker
     this.pool = new Piscina({
-      filename: join(__dirname, '../../dist/api/src/workers/llm-worker.js'),
+      filename: join(__dirname, '../../dist/workers/llm-worker.js'),
       maxThreads: Math.max(1, Math.min(require('os').cpus().length - 1, 8)),
       minThreads: 2,
       idleTimeout: 30000, // 30 seconds
