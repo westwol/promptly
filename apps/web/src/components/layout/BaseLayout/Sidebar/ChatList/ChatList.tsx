@@ -2,19 +2,15 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { LucideSearch } from 'lucide-react';
-import { Preloaded, usePreloadedQuery } from 'convex/react';
+import { useLiveQuery } from 'dexie-react-hooks';
 
-import { api } from '@t3chat-convex/_generated/api';
+import { db } from '@t3chat/lib/db';
 
 import { groupConversationsByCategory } from './utils';
 import { ChatListGroup } from './ChatListGroup';
 
-interface ChatListProps {
-  preloadedConversations: Preloaded<typeof api.conversations.get>;
-}
-
-export const ChatList = ({ preloadedConversations }: ChatListProps) => {
-  const conversations = usePreloadedQuery(preloadedConversations);
+export const ChatList = () => {
+  const conversations = useLiveQuery(() => db.conversations.toArray());
 
   const [isPending, startTransition] = useTransition();
   const [conversationSearchQuery, setConversationSearchQuery] = useState<string>('');
