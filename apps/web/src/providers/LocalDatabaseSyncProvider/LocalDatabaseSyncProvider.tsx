@@ -22,11 +22,10 @@ export const LocalDatabaseSyncProvider = ({ children }: PropsWithChildren) => {
         const result = watch.localQueryResult();
         const conversations = result ?? [];
 
-        // Clear existing conversations and add new ones
         db.conversations.clear();
-        if (conversations.length > 0) {
-          db.conversations.bulkAdd(conversations);
-        }
+        conversations.forEach((conversation) => {
+          db.conversations.add(conversation);
+        });
       } catch (error) {
         console.error('Error syncing conversations to local database:', error);
       }

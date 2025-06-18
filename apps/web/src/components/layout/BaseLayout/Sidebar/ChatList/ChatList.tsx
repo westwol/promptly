@@ -10,7 +10,12 @@ import { groupConversationsByCategory } from './utils';
 import { ChatListGroup } from './ChatListGroup';
 
 export const ChatList = () => {
-  const conversations = useLiveQuery(() => db.conversations.toArray());
+  const conversations = useLiveQuery(async () => {
+    const allConversations = await db.conversations.toArray();
+    return allConversations.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  });
 
   const [isPending, startTransition] = useTransition();
   const [conversationSearchQuery, setConversationSearchQuery] = useState<string>('');
