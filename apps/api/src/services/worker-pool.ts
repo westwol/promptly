@@ -1,6 +1,7 @@
-import Piscina from 'piscina';
 import { join } from 'path';
 import { Id } from '@convex/_generated/dataModel';
+
+const Piscina = require('piscina');
 
 import { Attachment } from './stream';
 
@@ -25,7 +26,7 @@ interface LLMJobResult {
 }
 
 class WorkerPool {
-  private pool: Piscina;
+  private pool: any;
   private isInitialized = false;
 
   constructor() {
