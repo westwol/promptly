@@ -1,5 +1,3 @@
-import fetch from 'node-fetch';
-
 const SUPPORTED_IMAGE_TYPES = ['image/'];
 const SUPPORTED_DOCUMENT_TYPES = [
   'application/pdf',
@@ -16,6 +14,7 @@ interface Attachment {
 
 async function toDataURL(imageUrl: string): Promise<string> {
   try {
+    const { default: fetch } = await import('node-fetch');
     const res = await fetch(imageUrl);
 
     if (!res.ok) {
