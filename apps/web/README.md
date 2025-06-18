@@ -19,11 +19,11 @@
 2. Set up environment variables:
    Rename `.env.local.example` to `.env.local` file in the root directory with your API keys:
 
-   CONVEX_DEPLOYMENT: You can grab this env after setting up convex
-   NEXT_PUBLIC_CONVEX_URL: You can grab this env after setting up convex
-   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: From the pre-requisites
-   CLERK_SECRET_KEY: From the pre-requisites
-   UPLOADTHING_TOKEN: (Sign up)[https://uploadthing.com/sign-in], create a project and paste the token
+   - CONVEX_DEPLOYMENT: You can grab this env after setting up convex
+   - NEXT_PUBLIC_CONVEX_URL: You can grab this env after setting up convex
+   - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: From the pre-requisites
+   - CLERK_SECRET_KEY: From the pre-requisites
+   - UPLOADTHING_TOKEN: (Sign up)[https://uploadthing.com/sign-in], create a project and paste the token
 
 ### Development
 
