@@ -17,6 +17,8 @@ export const uploadBase64Image = async (
 
     const response = await utapi.uploadFiles([file]);
 
+    console.log({ response });
+
     if (response && response.length > 0 && response[0].data) {
       return response[0].data.url;
     }
