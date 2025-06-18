@@ -14,12 +14,12 @@ docker compose up
 
 1. Rename .env.example to .env and fill in the required env variables.
 
-CONVEX_URL: You can grab this convex url after setting up convex
-ANTHROPIC_API_KEY: You can create an api key in (anthropic console)[https://console.anthropic.com/settings/keys]
-DEEPSEEK_API_KEY You can create an api key in (deepseek platform)[https://platform.deepseek.com/api_keys]
-GEMINI_API_KEY: You can create an api key in (google ai studio)[https://aistudio.google.com/app/apikey]
-OPENAI_API_KEY: You can create an api key in (open ai platform)[https://platform.openai.com/api-keys]
-UPLOADTHING_TOKEN: (Sign up)[https://uploadthing.com/sign-in], create a project and paste the token
+   - CONVEX_URL: You can grab this convex url after setting up convex
+   - ANTHROPIC_API_KEY: You can create an api key in (anthropic console)[https://console.anthropic.com/settings/keys]
+   - DEEPSEEK_API_KEY You can create an api key in (deepseek platform)[https://platform.deepseek.com/api_keys]
+   - GEMINI_API_KEY: You can create an api key in (google ai studio)[https://aistudio.google.com/app/apikey]
+   - OPENAI_API_KEY: You can create an api key in (open ai platform)[https://platform.openai.com/api-keys]
+   - UPLOADTHING_TOKEN: (Sign up)[https://uploadthing.com/sign-in], create a project and paste the token
 
 2. Run the project
 
