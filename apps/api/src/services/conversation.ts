@@ -1,5 +1,5 @@
-import { Doc, Id } from '@t3chat-convex/_generated/dataModel';
-import { api } from '@t3chat-convex/_generated/api';
+import { Doc, Id } from '@convex/_generated/dataModel';
+import { api } from '@convex/_generated/api';
 
 import { client } from '../config/convex';
 import { openai } from '../config/llm';

@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { Id } from '@t3chat-convex/_generated/dataModel';
+import { Id } from '@convex/_generated/dataModel';
 
 import { redis } from '../config/redis';
 import { openai, deepseek, anthropic, gemini, createCustomLlmClient } from '../config/llm';
