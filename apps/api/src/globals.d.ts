@@ -1,8 +1,6 @@
 declare module '@convex/_generated/dataModel' {
-  export type Id = any;
-  export type Doc = any;
-  export type MutationName = any;
-  export type QueryName = any;
+  export type Id<T> = any;
+  export type Doc<T> = any;
 }
 
 declare module '@convex/_generated/api' {
