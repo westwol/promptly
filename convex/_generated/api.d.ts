@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as conversations from "../conversations.js";
+import type * as conversations from "../conversations.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -24,6 +25,7 @@ import type * as conversations from "../conversations.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  conversations: typeof conversations;
   conversations: typeof conversations;
 }>;
 export declare const api: FilterApi<

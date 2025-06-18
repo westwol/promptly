@@ -3,8 +3,8 @@ import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 
-import { startChatHandler } from './src/routes/chat.ts';
-import { streamChatHandler } from './src/routes/stream-chat.ts';
+import { startChatHandler } from './src/routes/chat';
+import { streamChatHandler } from './src/routes/stream-chat';
 import { redis } from './src/config/redis';
 
 const DEFAULT_MAX_REQUESTS = 20;
