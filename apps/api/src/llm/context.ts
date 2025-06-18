@@ -48,7 +48,7 @@ const PROMPT = `
      - If a user asks for something that can be illustrated with a diagram or table, choose the most readable Markdown construct.
      - Never emit raw HTML unless absolutely necessary; stick to pure Markdown.
 
-  ---
+  ----
   From now on, comply with these guidelines in every reply.
 `;
 

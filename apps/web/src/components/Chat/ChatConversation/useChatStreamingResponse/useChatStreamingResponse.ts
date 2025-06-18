@@ -57,6 +57,7 @@ export const useChatStreamingResponse = ({
       console.log('Stream completed, closing connection');
       eventSource.close();
       isStreamingResponse.current = false;
+      setForcedThinkingIndicator(false);
       setMessages((messages) =>
         messages.map((message, idx) =>
           idx === messages.length - 1 ? { ...message, status: 'complete' } : message
