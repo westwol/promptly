@@ -45,7 +45,7 @@ export async function startChatHandler(
       return reply.code(429).send('Limit exceeded');
     }
 
-    console.log('starting job....');
+    console.log('starting job..');
 
     const result = await startLLMJob({
       conversationId,
