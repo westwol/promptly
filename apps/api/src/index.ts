@@ -44,8 +44,9 @@ const runApp = async () => {
   fastify.get('/api/chat/stream', streamChatHandler);
 
   try {
-    await fastify.listen({ port: +(process.env.PORT || 4000) });
-    console.log(`Server running on ${process.env.PORT}`);
+    const port = +(process.env.PORT || 4000);
+    await fastify.listen({ port, host: '0.0.0.0' });
+    console.log(`Server running on port ${port}`);
   } catch (err) {
     console.error('Error starting server:', err);
     process.exit(1);
