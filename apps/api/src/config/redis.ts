@@ -8,6 +8,7 @@ export const redisConfig: RedisOptions = {
   port: +(process.env.REDIS_PORT || '6379'),
   username: process.env.REDIS_USERNAME,
   password: process.env.REDIS_PASSWORD,
+  family: 0,
 };
 
 export const redis: Redis = new Redis(redisConfig);
