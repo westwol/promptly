@@ -1,6 +1,6 @@
 'use client';
 
-import { PropsWithChildren, useRef, useState } from 'react';
+import { PropsWithChildren, useRef, useState, Suspense } from 'react';
 import { Preloaded } from 'convex/react';
 import { Menu } from 'lucide-react';
 
@@ -48,7 +48,9 @@ export const BaseLayout = ({ children }: PropsWithChildren) => {
         {!isCollapsed && <ResizableHandle className="bg-secondary handle-animate w-1" />}
         <ResizablePanel id="right-panel" defaultSize={83} className="panel-animate">
           <div className="bg-secondary panel-content relative h-screen overflow-auto">
-            <ChatTabs isCollapsed={isCollapsed} />
+            <Suspense fallback={<div className="bg-secondary h-12" />}>
+              <ChatTabs isCollapsed={isCollapsed} />
+            </Suspense>
             {children}
           </div>
         </ResizablePanel>
