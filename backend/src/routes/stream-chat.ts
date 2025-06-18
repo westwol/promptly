@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import Redis from 'ioredis';
 
-import { redis } from '../config/redis';
+import { redis, redisConfig } from '../config/redis';
 
 interface StreamQuery {
   streamId: string;
@@ -56,10 +56,7 @@ export async function streamChatHandler(
     }
 
     // Subscribe for new events
-    const sub = new Redis({
-      host: process.env.REDIS_HOST,
-      port: +(process.env.REDIS_PORT || '6379'),
-    });
+    const sub = new Redis(redisConfig);
 
     await sub.subscribe(`chat:pub:${streamId}`);
 

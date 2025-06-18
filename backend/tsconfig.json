@@ -10,8 +10,7 @@
     "outDir": "dist",
     "rootDir": ".",
     "baseUrl": ".",
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
+    "allowImportingTsExtensions": false,
     "paths": {
       "*": ["node_modules/*"],
       "@t3chat-convex/*": ["../convex/*"]
