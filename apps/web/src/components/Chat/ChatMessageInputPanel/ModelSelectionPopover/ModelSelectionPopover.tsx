@@ -6,11 +6,15 @@ import { Popover } from '@t3chat/components/ui';
 import { LlmModel } from '@t3chat/interfaces/llmModels';
 import { usePreferencesStore } from '@t3chat/store/preferences';
 import { AVAILABLE_MODELS } from '@t3chat/fixtures/availableModels';
+import { useUser } from '@clerk/nextjs';
 
 import { ModelLineItem } from './ModelLineItem';
 import { MODEL_ICON_MAP } from './shared/constants';
 
+const ALLOWED_EMAILS = ['marcos.sm2432@gmail.com'];
+
 export const ModelSelectionPopover = () => {
+  const { user } = useUser();
   const preferencesStore = usePreferencesStore();
   const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
   const [modelSearchQuery, setModelSearchQuery] = useState<string>('');
@@ -72,7 +76,15 @@ export const ModelSelectionPopover = () => {
           >
             {filteredModels.length > 0 ? (
               filteredModels.map((model) => (
-                <ModelLineItem key={model.model} {...model} onSelect={() => onSelectModel(model)} />
+                <ModelLineItem
+                  key={model.model}
+                  {...model}
+                  disabled={
+                    model.model === 'gpt-image-1' &&
+                    !ALLOWED_EMAILS.includes(user?.emailAddresses[0]?.emailAddress || '')
+                  }
+                  onSelect={() => onSelectModel(model)}
+                />
               ))
             ) : (
               <div className="flex items-center justify-center gap-2">

@@ -1,6 +1,6 @@
 # Promptly - Multi-Model AI Chat Platform
 
-A modern, full-stack AI chat application built with Next.js, featuring support for multiple AI providers, real-time streaming, file uploads.
+A modern, full-stack AI chat application built with Next.js, featuring support for multiple AI providers, image generation, real-time streaming, file uploads.
 
 ## 🚀 Features
 
@@ -40,41 +40,21 @@ A modern, full-stack AI chat application built with Next.js, featuring support f
 - **Model-specific capabilities** - Vision, web search, reasoning, image generation
 - **Rate limiting** to prevent abuse
 
-## 📁 Project Structure
-
-```
-├── apps/
-│   ├── web/                 # Next.js frontend application
-│   ├── api/                 # Fastify backend API server
-│   └── convex/              # Convex database schema and functions
-├── libs/                    # Shared libraries (if any)
-├── package.json            # Root package.json with workspaces
-├── turbo.json              # Turbo build configuration
-└── docker-compose.yml      # Redis service for development
-```
-
 ## 🛠️ Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ and npm 9+
+- Node.js 20+ and npm 9+
 - Redis (for development, provided via Docker)
 - API keys for your preferred AI providers
 
-This will start:
-
-- **Web app**: http://localhost:3000
-- **API server**: http://localhost:3001
-- **Redis**: localhost:6379
-
 ## 🔧 Configuration
 
-### AI Provider Setup
+### App Documentation
 
-1. **OpenAI**: Get API key from [OpenAI Platform](https://platform.openai.com/)
-2. **Anthropic**: Get API key from [Anthropic Console](https://console.anthropic.com/)
-3. **Google**: Get API key from [Google AI Studio](https://aistudio.google.com/)
-4. **Deepseek**: Get API key from [Deepseek Platform](https://platform.deepseek.com/)
+- **[Web App Documentation](apps/web/README.md)** - Next.js frontend application
+- **[API Server Documentation](apps/api/README.md)** - Fastify backend API server
+- **[Convex Database Documentation](apps/convex/README.md)** - Database schema and functions
 
 ## 🤝 Contributing
 

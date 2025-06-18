@@ -7,7 +7,7 @@ import { streamChatHandler } from './routes/stream-chat';
 import { redis } from './config/redis';
 import { workerPool } from './services/worker-pool';
 
-const START_CHAT_MAX_REQUESTS = 10;
+const START_CHAT_MAX_REQUESTS = 5;
 
 dotenv.config();
 
