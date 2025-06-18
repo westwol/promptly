@@ -1,30 +1,31 @@
 'use client';
 
-import { Preloaded, usePreloadedQuery } from 'convex/react';
 import { X, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { api } from '@t3chat-convex/_generated/api';
+import { useLiveQuery } from 'dexie-react-hooks';
+
 import { Doc } from '@t3chat-convex/_generated/dataModel';
 import { usePreferencesStore } from '@t3chat/store/preferences';
 import { cn } from '@t3chat/lib/utils';
+import { db } from '@t3chat/lib/db';
 
 interface ChatTabsProps {
   isCollapsed: boolean;
-  preloadedConversations: Preloaded<typeof api.conversations.get>;
 }
 
-export const ChatTabs = ({ isCollapsed, preloadedConversations }: ChatTabsProps) => {
-  const conversations = usePreloadedQuery(preloadedConversations);
+export const ChatTabs = ({ isCollapsed }: ChatTabsProps) => {
+  const conversations = useLiveQuery(() => db.conversations.toArray());
+
   const recentChats = usePreferencesStore((state) => state.recentChats);
   const removeFromRecentChats = usePreferencesStore((state) => state.removeFromRecentChats);
   const pathname = usePathname();
   const router = useRouter();
 
   const foundChats = recentChats.reduce((chats: Doc<'conversations'>[], conversationUuid) => {
-    const foundConversation = conversations.find(
+    const foundConversation = conversations?.find(
       (conversation) => conversation.conversationUuid === conversationUuid
     );
     if (foundConversation) {

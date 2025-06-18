@@ -9,11 +9,7 @@ import { ChatList } from './ChatList';
 import { NewChatButton } from './NewChatButton';
 import { SidebarFooter } from './SidebarFooter';
 
-interface SidebarProps {
-  preloadedConversations: Preloaded<typeof api.conversations.get>;
-}
-
-export const Sidebar = ({ preloadedConversations }: SidebarProps) => {
+export const Sidebar = () => {
   return (
     <div className="bg-primary relative flex h-screen flex-col transition-all duration-200">
       <div className="flex items-center justify-between pt-4 pb-6">
@@ -23,7 +19,7 @@ export const Sidebar = ({ preloadedConversations }: SidebarProps) => {
         </div>
       </div>
       <NewChatButton />
-      <ChatList preloadedConversations={preloadedConversations} />
+      <ChatList />
       <SidebarFooter />
     </div>
   );

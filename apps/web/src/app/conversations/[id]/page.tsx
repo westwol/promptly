@@ -9,3 +9,11 @@ export default async function ConversationPage({ params }: ConversationPageParam
 
   return <ChatConversation conversationId={conversationId} />;
 }
+
+export const dynamic = 'force-static';
+
+export const revalidate = false;
+
+export const metadata = {
+  title: 'Promptly - Conversation',
+};
