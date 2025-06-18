@@ -13,7 +13,7 @@ export const get = query({
     if (userId) {
       return await ctx.db
         .query('conversations')
-        .filter((q) => q.eq(q.field('userId'), userId))
+        .withIndex('by_user_created_at', (q) => q.eq('userId', userId))
         .filter((q) => q.neq(q.field('deleted'), true))
         .order('desc')
         .collect();

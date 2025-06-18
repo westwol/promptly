@@ -18,7 +18,7 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@convex/*": ["../convex/*"]
+      "@convex/*": ["../convex/convex/*"]
     }
   },
   "include": ["src", "src/globals.d.ts"],

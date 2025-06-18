@@ -4,23 +4,28 @@ import { useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { useSessionStore } from '@t3chat/store/session';
-import { setSessionCookie } from '@t3chat/utils/sessions';
+import { useAuth } from '@clerk/nextjs';
+
+export const ANONYMOUS_LOCAL_STORAGE_IDENTIFIER = 'anon_local_session';
 
 interface SessionProviderProps {
-  sessionId: string;
   children: React.ReactNode;
 }
 
-export const SessionProvider = ({ sessionId, children }: SessionProviderProps) => {
+export const SessionProvider = ({ children }: SessionProviderProps) => {
+  const { userId } = useAuth();
   const setSessionId = useSessionStore((state) => state.setSessionId);
 
   useEffect(() => {
-    const _sessionId = sessionId || uuidv4();
-    if (!sessionId) {
-      setSessionCookie(_sessionId);
+    let storedAnonymousId = localStorage.getItem(ANONYMOUS_LOCAL_STORAGE_IDENTIFIER);
+    if (!storedAnonymousId) {
+      const newId = `${uuidv4()}-anon`;
+      localStorage.setItem(ANONYMOUS_LOCAL_STORAGE_IDENTIFIER, newId);
+      storedAnonymousId = newId;
     }
-    setSessionId(_sessionId);
-  }, [sessionId, setSessionId]);
+    const loggedSession = userId ?? storedAnonymousId;
+    setSessionId(loggedSession);
+  }, [userId, setSessionId]);
 
   return <>{children}</>;
 };

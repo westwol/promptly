@@ -15,14 +15,7 @@ import { ImperativePanelHandle } from 'react-resizable-panels';
 import { Sidebar } from './Sidebar';
 import { ChatTabs } from './ChatTabs/ChatTabs';
 
-interface BaseLayoutProps {
-  preloadedConversations: Preloaded<typeof api.conversations.get>;
-}
-
-export const BaseLayout = ({
-  children,
-  preloadedConversations,
-}: PropsWithChildren<BaseLayoutProps>) => {
+export const BaseLayout = ({ children }: PropsWithChildren) => {
   const resizablePanel = useRef<ImperativePanelHandle>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -50,21 +43,12 @@ export const BaseLayout = ({
           onCollapse={() => setIsCollapsed(true)}
           onExpand={() => setIsCollapsed(false)}
         >
-          <Sidebar preloadedConversations={preloadedConversations} />
+          <Sidebar />
         </ResizablePanel>
-        {!isCollapsed && (
-          <ResizableHandle className="bg-secondary handle-animate w-1" />
-        )}
-        <ResizablePanel
-          id="right-panel"
-          defaultSize={83}
-          className="panel-animate"
-        >
+        {!isCollapsed && <ResizableHandle className="bg-secondary handle-animate w-1" />}
+        <ResizablePanel id="right-panel" defaultSize={83} className="panel-animate">
           <div className="bg-secondary panel-content relative h-screen overflow-auto">
-            <ChatTabs
-              isCollapsed={isCollapsed}
-              preloadedConversations={preloadedConversations}
-            />
+            <ChatTabs isCollapsed={isCollapsed} />
             {children}
           </div>
         </ResizablePanel>

@@ -11,7 +11,9 @@ export default defineSchema({
     deleted: v.optional(v.boolean()), // logic deletion
     createdAt: v.string(), // When the conversation was started
     updatedAt: v.string(), // Last update time
-  }).index('by_user_id', ['userId']),
+  })
+    .index('by_user_id', ['userId'])
+    .index('by_user_created_at', ['userId', 'createdAt']),
 
   messages: defineTable({
     conversationId: v.id('conversations'), // Parent conversation

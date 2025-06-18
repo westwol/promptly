@@ -12,6 +12,7 @@ import { Toaster } from '@t3chat/components/ui';
 import { SessionProvider } from '@t3chat/providers/SessionProvider';
 import { api } from '@t3chat-convex/_generated/api';
 import { getSessionCookie } from '@t3chat/utils/sessions';
+import { LocalDatabaseSyncProvider } from '@t3chat/providers/LocalDatabaseSyncProvider';
 
 const nunitoSans = Nunito_Sans({
   subsets: ['latin'],
@@ -28,18 +29,16 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [user, anonymousSessionId] = await Promise.all([auth(), getSessionCookie()]);
-  const sessionId = user.userId ?? anonymousSessionId;
-  const conversations = await preloadQuery(api.conversations.get, { sessionId });
-
   return (
     <html lang="en">
       <body className={`${nunitoSans.className} antialiased`}>
         <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
           <ConvexClientProvider>
-            <SessionProvider sessionId={sessionId}>
-              <Toaster />
-              <BaseLayout preloadedConversations={conversations}>{children}</BaseLayout>
+            <SessionProvider>
+              <LocalDatabaseSyncProvider>
+                <Toaster />
+                <BaseLayout>{children}</BaseLayout>
+              </LocalDatabaseSyncProvider>
             </SessionProvider>
           </ConvexClientProvider>
         </ClerkProvider>

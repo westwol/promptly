@@ -1,16 +1,26 @@
 import Image from 'next/image';
 import { LogOut } from 'lucide-react';
 import { useClerk } from '@clerk/nextjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Popover } from '@t3chat/components/ui';
+import { db } from '@t3chat/lib/db';
+
 import { CustomApiKeyModal } from './CustomApiKeyModal';
+import { useSessionStore } from '@t3chat/store/session';
+import { ANONYMOUS_LOCAL_STORAGE_IDENTIFIER } from '@t3chat/providers/SessionProvider/SessionProvider';
 
 export const LoggedUserPanel = () => {
+  const setSessionId = useSessionStore((state) => state.setSessionId);
   const { signOut, user } = useClerk();
 
   const onLogout = async () => {
     try {
+      const anonymousLocalStorageId =
+        localStorage.getItem(ANONYMOUS_LOCAL_STORAGE_IDENTIFIER) || uuidv4();
       await signOut();
+      setSessionId(anonymousLocalStorageId);
+      db.conversations.clear();
     } catch (err) {
       console.error('Sign out error', err);
     }
