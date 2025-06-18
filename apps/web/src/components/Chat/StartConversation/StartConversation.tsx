@@ -33,8 +33,9 @@ export const StartConversation = () => {
     // Add the new conversation to recent chats
     preferencesStore.addToRecentChats(generatedConversationId);
 
-    router.push(`/conversations/${generatedConversationId}?new=true`);
+    router.push(`/conversations?id=${generatedConversationId}&new=true`);
 
+    // Create the conversation first to ensure optimistic update is applied
     const conversationId = await createInitialConversation({
       conversationId: generatedConversationId,
       content,

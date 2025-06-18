@@ -114,6 +114,10 @@ export const useChatStreamingResponse = ({
   }, [messages, onStartResumableStream]);
 
   useEffect(() => {
+    if (conversationUuid.length === 0) {
+      return;
+    }
+
     const watch = client.watchQuery(api.conversations.getById, {
       conversationUuid,
     });

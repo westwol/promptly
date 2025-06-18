@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { useMutation } from 'convex/react';
 import { Pin, Trash2 } from 'lucide-react';
 import { motion, HTMLMotionProps } from 'framer-motion';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 import { api } from '@t3chat-convex/_generated/api';
 import { Doc } from '@t3chat-convex/_generated/dataModel';
@@ -29,9 +29,14 @@ const BUTTON_ANIMATION_PROPS: HTMLMotionProps<'div'> = {
 
 export const ChatConversationItem = (conversation: Doc<'conversations'>) => {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentConversationUuid = searchParams.get('id') || 'unknown';
+
   const sessionId = useSessionStore((state) => state.sessionId);
   const addToRecentChats = usePreferencesStore((state) => state.addToRecentChats);
-  const isSelected = pathname === `/conversations/${conversation.conversationUuid}`;
+
+  const isSelected =
+    pathname === `/conversations` && currentConversationUuid === conversation.conversationUuid;
 
   const updateConversation = useMutation(api.conversations.updateConversation).withOptimisticUpdate(
     (localStore, { conversationId, ...updateParams }) => {
@@ -59,7 +64,7 @@ export const ChatConversationItem = (conversation: Doc<'conversations'>) => {
           className={`flex items-center justify-between rounded-sm p-2 text-sm ${
             isSelected ? 'bg-tertiary' : 'hover:bg-tertiary'
           } relative overflow-hidden`}
-          href={`/conversations/${conversation.conversationUuid}`}
+          href={`/conversations?id=${conversation.conversationUuid}`}
           prefetch={true}
           onClick={() => addToRecentChats(conversation.conversationUuid)}
         >

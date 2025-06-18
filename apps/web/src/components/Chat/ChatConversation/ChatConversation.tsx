@@ -21,23 +21,20 @@ import { useChatStreamingResponse } from './useChatStreamingResponse';
 import { shouldDisplayThinkingIndicator } from './utils';
 import { ScrollToBottomPanel } from './ScrollToBottomPanel';
 
-interface ChatConversationProps {
-  conversationId: string;
-}
-
-export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
+export const ChatConversation = () => {
   const searchParams = useSearchParams();
   const isNewConversation = searchParams.get('new');
+  const conversationUuid = searchParams.get('id') || 'unknown';
 
   const conversationData = useQuery(api.conversations.getById, {
-    conversationUuid: conversationId,
+    conversationUuid,
   });
 
   const addMessageToConversation = useMutation(
     api.conversations.addNewMessageToConversation
   ).withOptimisticUpdate((localStore) => {
     const queryParams = {
-      conversationUuid: conversationId,
+      conversationUuid,
     };
     const conversation = localStore.getQuery(api.conversations.getById, queryParams);
     if (!conversation) {
@@ -160,12 +157,23 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     messages,
     setMessages,
     setForcedThinkingIndicator,
-    conversationUuid: conversationId,
+    conversationUuid,
   });
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
+
+  if (!conversationUuid) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="mb-4 text-2xl font-bold text-white">No conversation selected</h1>
+          <p className="text-gray-400">Please select a conversation from the sidebar.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative grid h-screen grid-rows-[1fr_auto] pt-10">
