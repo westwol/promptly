@@ -1,9 +1,6 @@
 import * as dotenv from 'dotenv';
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
-import crypto from 'node:crypto';
-
-(globalThis as any).crypto = crypto;
 
 import { startChatHandler } from './routes/chat';
 import { streamChatHandler } from './routes/stream-chat';

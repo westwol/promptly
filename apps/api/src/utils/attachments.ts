@@ -1,3 +1,7 @@
+import crypto from 'node:crypto';
+
+(globalThis as any).crypto = crypto;
+
 const SUPPORTED_IMAGE_TYPES = ['image/'];
 const SUPPORTED_DOCUMENT_TYPES = [
   'application/pdf',
