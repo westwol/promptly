@@ -1,7 +1,3 @@
-import crypto from 'node:crypto';
-
-(globalThis as any).crypto = crypto;
-
 import { UTApi, UTFile } from 'uploadthing/server';
 
 const utapi = new UTApi();
