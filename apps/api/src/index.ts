@@ -5,6 +5,7 @@ import cors from '@fastify/cors';
 import { startChatHandler } from './routes/chat';
 import { streamChatHandler } from './routes/stream-chat';
 import { redis } from './config/redis';
+import { workerPool } from './services/worker-pool';
 
 const START_CHAT_MAX_REQUESTS = 10;
 
@@ -37,7 +38,12 @@ const runApp = async () => {
 
   // Health check endpoint
   fastify.get('/health', async (request, reply) => {
-    return { status: 'ok', timestamp: new Date().toISOString() };
+    const workerStats = workerPool.getStats();
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      workerPool: workerStats,
+    };
   });
 
   fastify.post('/api/chat/start', startChatHandler);
@@ -47,10 +53,40 @@ const runApp = async () => {
     const port = +(process.env.PORT || 4000);
     await fastify.listen({ port, host: '0.0.0.0' });
     console.log(`Server running on port ${port}`);
+
+    // Log worker pool stats
+    const stats = workerPool.getStats();
+    console.log(`Worker pool initialized with ${stats.threadCount} threads`);
   } catch (err) {
     console.error('Error starting server:', err);
     process.exit(1);
   }
 };
+
+// Graceful shutdown
+const gracefulShutdown = async (signal: string) => {
+  console.log(`Received ${signal}. Starting graceful shutdown...`);
+
+  try {
+    // Close the Fastify server
+    await fastify.close();
+
+    // Shutdown the worker pool
+    await workerPool.shutdown();
+
+    // Close Redis connection
+    await redis.quit();
+
+    console.log('Graceful shutdown completed');
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during graceful shutdown:', error);
+    process.exit(1);
+  }
+};
+
+// Handle shutdown signals
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 runApp();

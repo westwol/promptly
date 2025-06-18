@@ -47,7 +47,7 @@ export async function startChatHandler(
 
     console.log('starting job....');
 
-    startLLMJob({
+    const result = await startLLMJob({
       conversationId,
       messages,
       model,
@@ -55,7 +55,18 @@ export async function startChatHandler(
       reasoning,
       customApiKey,
     });
-    return reply.send({ ok: true });
+
+    if (!result.success) {
+      return reply.status(500).send({
+        error: 'Failed to start LLM job',
+        details: result.error,
+      });
+    }
+
+    return reply.send({
+      ok: true,
+      streamId: result.streamId,
+    });
   } catch (error) {
     console.error('Error processing request:', error);
     return reply.status(500).send({ error: 'Internal server error' });
