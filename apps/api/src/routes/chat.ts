@@ -2,7 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 
 import { Id } from '@t3chat-convex/_generated/dataModel';
 import { Attachment, startLLMJob } from '../services/stream';
-import { chatStartRateLimit } from '../../index';
+import { chatStartRateLimit } from '../index';
 import {
   addMessageToConversation,
   updateConversationProcessingStatus,
