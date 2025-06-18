@@ -1,7 +1,7 @@
 import { CompletedChatAttachment } from '@t3chat/interfaces/chat';
 import { LlmModel } from '@t3chat/interfaces/llmModels';
 
-export const API_ENDPOINT = 'http://localhost:4000/api';
+export const API_ENDPOINT = process.env.NEXT_PUBLIC_API_ENDPOINT || 'http://localhost:4000/api';
 
 interface StartChatParams {
   content: string;
