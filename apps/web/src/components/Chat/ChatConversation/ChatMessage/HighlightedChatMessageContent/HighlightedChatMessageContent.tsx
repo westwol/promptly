@@ -82,6 +82,7 @@ export const HighlightedChatMessageContent = ({ content }: HighlightedChatMessag
             </li>
           );
         },
+        strong: ({ children }) => children,
         p: ({ children }) => <p className="my-2 first:mt-0 last:mb-0">{children}</p>,
         pre: ({ children }) => <div className="group">{children}</div>,
         table({ children }) {

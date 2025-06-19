@@ -19,6 +19,7 @@ export const ChatMessage = React.memo(
     messageUuid,
     content,
     role,
+    type,
     resumableStreamId,
     onScrollToBottom,
     status,
@@ -51,7 +52,7 @@ export const ChatMessage = React.memo(
         )}
       >
         <HighlightedChatMessageContent content={currentContent} />
-        {role === 'assistant' && status === 'complete' && (
+        {role === 'assistant' && type === 'text' && status === 'complete' && (
           <>
             <button
               className="hover:bg-primary/80 invisible mt-4 cursor-pointer items-center justify-center rounded-md p-1.5 group-hover:visible"

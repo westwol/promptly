@@ -67,7 +67,12 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
 
   const messages = useLiveQuery(
     async () => {
-      return db.messages.where('conversationUuid').equals(conversationId).sortBy('createdAt');
+      const messages = await db.messages
+        .where('conversationUuid')
+        .equals(conversationId)
+        .sortBy('createdAt');
+      setTimeout(() => scrollToBottom(true), 0);
+      return messages;
     },
     [conversationId],
     []
@@ -153,8 +158,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       return;
     }
 
-    const scrollPosition = messagesContainer.scrollTop;
-    currentScrollPosition.current = scrollPosition;
+    currentScrollPosition.current = messagesContainer.scrollTop;
 
     setShouldDisplayScrollToBottom(
       messagesContainer.scrollHeight -
