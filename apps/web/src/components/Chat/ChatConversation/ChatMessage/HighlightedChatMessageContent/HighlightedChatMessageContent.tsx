@@ -9,6 +9,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
 
 import { Tooltip } from '@t3chat/components/ui';
+import { cn } from '@t3chat/lib/utils';
 
 const THEME_HIGHLIGHT_STYLES: SyntaxHighlighterProps['style'] = {
   ...vscDarkPlus,
@@ -54,16 +55,33 @@ export const HighlightedChatMessageContent = ({ content }: HighlightedChatMessag
       remarkPlugins={[remarkGfm]}
       components={{
         ol: ({ children }) => (
-          <ol className="ml-0 list-decimal first:mt-0 last:mb-0">{children}</ol>
+          <ol className="mt-[-20px] ml-0 list-decimal first:mt-0 last:mb-0">{children}</ol>
         ),
         ul: ({ children }) => (
           <ul className="mt-[-20px] ml-0 list-disc marker:text-gray-400">{children}</ul>
         ),
-        li: ({ children }) => (
-          <li className="ml-5 text-gray-200">
-            <div className="flex flex-col gap-2">{children}</div>
-          </li>
-        ),
+        li: ({ children }) => {
+          const hasCodeElement = React.Children.toArray(children).some((child) => {
+            if (React.isValidElement(child)) {
+              return (
+                child.type === 'code' ||
+                (typeof child.type === 'function' && child.type.name === 'code') ||
+                (child.props &&
+                  child.props.children &&
+                  React.Children.toArray(child.props.children).some(
+                    (grandChild) => React.isValidElement(grandChild) && grandChild.type === 'code'
+                  ))
+              );
+            }
+            return false;
+          });
+
+          return (
+            <li className="ml-5 text-gray-200">
+              <div className={cn(!hasCodeElement && 'flex flex-col gap-2')}>{children}</div>
+            </li>
+          );
+        },
         p: ({ children }) => <p className="my-2 first:mt-0 last:mb-0">{children}</p>,
         pre: ({ children }) => <div className="group">{children}</div>,
         table({ children }) {

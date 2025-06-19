@@ -44,6 +44,7 @@ export const Chat = () => {
 
           // Debounce the reconciliation call
           debounceTimeoutRef.current = setTimeout(async () => {
+            console.log({ messages });
             await reconcileMessagesByUuid(conversationId, messages);
           }, 100); // 100ms debounce
         }
