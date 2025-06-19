@@ -47,10 +47,11 @@ export const getById = query({
 export const createInitialConversation = mutation({
   args: {
     conversationId: v.string(),
+    messageUuid: v.string(),
     content: v.string(),
     sessionId: v.optional(v.string()),
   },
-  handler: async (ctx, { conversationId, content, sessionId }) => {
+  handler: async (ctx, { conversationId, messageUuid, content, sessionId }) => {
     const currentDate = new Date().toISOString();
     const identity = await ctx.auth.getUserIdentity();
     const userId = identity?.subject || sessionId;
@@ -68,6 +69,7 @@ export const createInitialConversation = mutation({
     await ctx.db.insert('messages', {
       conversationId: newConversationId,
       content,
+      messageUuid,
       status: 'complete',
       type: 'text',
       role: 'user',
@@ -99,6 +101,7 @@ export const updateConversation = mutation({
 export const addNewMessageToConversation = mutation({
   args: {
     conversationId: v.id('conversations'),
+    messageUuid: v.string(),
     resumableStreamId: v.optional(v.string()),
     role: v.union(v.literal('user'), v.literal('assistant'), v.literal('system')),
     type: v.union(v.literal('text'), v.literal('image')),

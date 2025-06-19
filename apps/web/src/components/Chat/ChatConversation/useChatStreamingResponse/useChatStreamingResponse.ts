@@ -1,94 +1,101 @@
-import { Dispatch, SetStateAction, useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useConvex } from 'convex/react';
 
 import { Doc } from '@t3chat-convex/_generated/dataModel';
 import { API_ENDPOINT } from '@t3chat/utils/api';
-import { api } from '@t3chat-convex/_generated/api';
+import { db } from '@t3chat/lib/db';
 
 interface UseStreamingResponseProps {
-  conversationUuid: string;
   messages: Doc<'messages'>[];
-  setMessages: Dispatch<SetStateAction<Doc<'messages'>[]>>;
   setForcedThinkingIndicator: (value: boolean) => void;
+  conversationUuid: string;
 }
 
 export const useChatStreamingResponse = ({
-  conversationUuid,
   messages,
-  setMessages,
   setForcedThinkingIndicator,
+  conversationUuid,
 }: UseStreamingResponseProps) => {
-  const client = useConvex();
   const eventSourceRef = useRef<EventSource | null>(null);
   const lastStreamReceived = useRef<string>('');
   const isStreamingResponse = useRef<boolean>(false);
 
-  const onStartResumableStream = useCallback((streamId: string) => {
-    // Clean up previous event source
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-    }
+  const onStartResumableStream = useCallback(
+    (messageId: string, streamId: string) => {
+      // Clean up previous event source
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
 
-    const eventSource = new EventSource(`${API_ENDPOINT}/chat/stream?streamId=${streamId}`);
+      const eventSource = new EventSource(`${API_ENDPOINT}/chat/stream?streamId=${streamId}`);
 
-    eventSourceRef.current = eventSource;
-    lastStreamReceived.current = streamId;
+      eventSourceRef.current = eventSource;
+      lastStreamReceived.current = streamId;
 
-    eventSource.onopen = () => {
-      isStreamingResponse.current = true;
-    };
+      eventSource.onopen = () => {
+        isStreamingResponse.current = true;
+      };
 
-    eventSource.onmessage = (event) => {
-      setForcedThinkingIndicator(false);
-      setMessages((messages) => {
+      eventSource.onmessage = async (event) => {
+        setForcedThinkingIndicator(false);
+
+        // Update the last message in the local database
         const lastMessage = messages[messages.length - 1];
         if (lastMessage?.resumableStreamId) {
-          const updatedMessage = {
-            ...lastMessage,
-            content: lastMessage.content + event.data.replace(/\\n/g, '\n'),
-          };
-          return [...messages.slice(0, -1), updatedMessage];
+          await db.messages
+            .where('messageUuid')
+            .equals(lastMessage.messageUuid)
+            .modify((message) => {
+              message.content += event.data.replace(/\\n/g, '\n');
+              message.updatedAt = new Date().toISOString();
+            });
         }
-        return messages;
+      };
+
+      eventSource.addEventListener('done', async () => {
+        console.log('Stream completed, closing connection');
+        eventSource.close();
+        isStreamingResponse.current = false;
+        setForcedThinkingIndicator(false);
+
+        // Update the last message status to complete in the local database
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage?.resumableStreamId) {
+          await db.messages
+            .where('messageUuid')
+            .equals(lastMessage.messageUuid)
+            .modify((message) => {
+              message.status = 'complete';
+              message.updatedAt = new Date().toISOString();
+            });
+        }
       });
-    };
 
-    eventSource.addEventListener('done', () => {
-      console.log('Stream completed, closing connection');
-      eventSource.close();
-      isStreamingResponse.current = false;
-      setForcedThinkingIndicator(false);
-      setMessages((messages) =>
-        messages.map((message, idx) =>
-          idx === messages.length - 1 ? { ...message, status: 'complete' } : message
-        )
-      );
-    });
-
-    eventSource.addEventListener('image', (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        setMessages((messages) => {
+      eventSource.addEventListener('image', async (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          // Update the last message with image content in the local database
           const lastMessage = messages[messages.length - 1];
           if (lastMessage?.resumableStreamId) {
-            const updatedMessage = {
-              ...lastMessage,
-              content: `![Generated Image](${data.imageUrl})`,
-            };
-            return [...messages.slice(0, -1), updatedMessage];
+            await db.messages
+              .where('messageUuid')
+              .equals(lastMessage.messageUuid)
+              .modify((message) => {
+                message.content = `![Generated Image](${data.imageUrl})`;
+                message.updatedAt = new Date().toISOString();
+              });
           }
-          return messages;
-        });
-      } catch (error) {
-        console.error('Error processing image event:', error);
-      }
-    });
+        } catch (error) {
+          console.error('Error processing image event:', error);
+        }
+      });
 
-    eventSource.onerror = (err) => {
-      console.error('SSE error', err);
-    };
-    // eslint-disable-next-line
-  }, []);
+      eventSource.onerror = (err) => {
+        console.error('SSE error', err);
+      };
+    },
+    [messages, setForcedThinkingIndicator]
+  );
 
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
@@ -110,31 +117,17 @@ export const useChatStreamingResponse = ({
     }
 
     lastStreamReceived.current = lastMessage.resumableStreamId;
-    onStartResumableStream(lastMessage.resumableStreamId);
+    onStartResumableStream(lastMessage.messageUuid, lastMessage.resumableStreamId);
   }, [messages, onStartResumableStream]);
 
   useEffect(() => {
-    const watch = client.watchQuery(api.conversations.getById, {
-      conversationUuid,
-    });
-
-    const unsubscribe = watch.onUpdate(() => {
-      try {
-        const result = watch.localQueryResult();
-        const messages = result?.messages || [];
-        const lastMessage = messages[messages.length - 1];
-        if (lastMessage?.resumableStreamId === lastStreamReceived.current) {
-          return;
-        }
-        setMessages(result?.messages || []);
-      } catch {}
-    });
-
     return () => {
-      unsubscribe();
+      if (eventSourceRef.current) {
+        isStreamingResponse.current = false;
+        eventSourceRef.current.close();
+      }
     };
-    // eslint-disable-next-line
-  }, [client, conversationUuid]);
+  }, [conversationUuid]);
 
   return {};
 };

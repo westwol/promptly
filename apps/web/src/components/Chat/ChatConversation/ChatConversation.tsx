@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { isEmpty, last } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useSearchParams } from 'next/navigation';
 
 import { CustomApiKeys, usePreferencesStore } from '@t3chat/store/preferences';
@@ -11,14 +12,12 @@ import { startChat } from '@t3chat/utils/api';
 import { api } from '@t3chat-convex/_generated/api';
 import { Doc } from '@t3chat-convex/_generated/dataModel';
 import { CompletedChatAttachment } from '@t3chat/interfaces/chat';
-import { cn } from '@t3chat/lib/utils';
 import { useChatStore } from '@t3chat/store/chat';
+import { db, MessageWithConversationUuid } from '@t3chat/lib/db';
 
 import { ChatMessage } from './ChatMessage';
 import { ThinkingIndicator } from './ThinkingIndicator';
 import { ChatMessageInputPanel } from '../ChatMessageInputPanel';
-import { useChatStreamingResponse } from './useChatStreamingResponse';
-import { shouldDisplayThinkingIndicator } from './utils';
 import { ScrollToBottomPanel } from './ScrollToBottomPanel';
 
 interface ChatConversationProps {
@@ -35,7 +34,7 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
 
   const addMessageToConversation = useMutation(
     api.conversations.addNewMessageToConversation
-  ).withOptimisticUpdate((localStore) => {
+  ).withOptimisticUpdate((localStore, { messageUuid, content }) => {
     const queryParams = {
       conversationUuid: conversationId,
     };
@@ -43,6 +42,17 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     if (!conversation) {
       return;
     }
+    const currentDate = new Date().toISOString();
+    db.messages.add({
+      _id: uuidv4(),
+      messageUuid,
+      conversationId,
+      role: 'user',
+      type: 'text',
+      status: 'complete',
+      createdAt: currentDate,
+      content,
+    } as MessageWithConversationUuid);
     localStore.setQuery(api.conversations.getById, queryParams, {
       messages: conversation.messages,
       conversation: {
@@ -55,14 +65,18 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const currentScrollPosition = useRef<number>(0);
 
-  const [messages, setMessages] = useState<Doc<'messages'>[]>(conversationData?.messages || []);
-  const [forcedThinkingIndicator, setForcedThinkingIndicator] = useState<boolean>(
+  const messages = useLiveQuery(
+    async () => {
+      return db.messages.where('conversationUuid').equals(conversationId).sortBy('createdAt');
+    },
+    [conversationId],
+    []
+  );
+
+  const [shouldShowThinkingIndicator, setShouldShowThinkingIndicator] = useState<boolean>(
     isNewConversation === 'true'
   );
   const [shouldDisplayScrollToBottom, setShouldDisplayScrollToBottom] = useState<boolean>(false);
-
-  const shouldShowThinkingIndicator =
-    forcedThinkingIndicator || shouldDisplayThinkingIndicator(messages);
 
   const scrollToBottom = useCallback((force?: boolean) => {
     const messagesContainer = messagesContainerRef.current;
@@ -81,9 +95,14 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     }
   }, []);
 
+  const onDismissThinkingIndicator = useCallback(() => {
+    setShouldShowThinkingIndicator(false);
+  }, []);
+
   const onSendRequest = async () => {
     const chatStore = useChatStore.getState();
     const preferencesStore = usePreferencesStore.getState();
+    const generatedMessageId = uuidv4();
 
     if (!conversationData?.conversation) {
       return;
@@ -96,27 +115,14 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
 
     addMessageToConversation({
       conversationId: conversationData.conversation._id,
+      messageUuid: generatedMessageId,
       content: chatStore.content,
       type: 'text',
       role: 'user',
       status: 'complete',
     });
 
-    const currentDate = new Date().toISOString();
-
-    setMessages((messages) => [
-      ...messages,
-      {
-        _id: uuidv4(),
-        status: 'complete',
-        role: 'user',
-        content: chatStore.content,
-        createdAt: currentDate,
-        updatedAt: currentDate,
-      } as Doc<'messages'>,
-    ]);
-
-    setForcedThinkingIndicator(true);
+    setShouldShowThinkingIndicator(true);
 
     const model = preferencesStore.model;
     const normalizedModel = preferencesStore.model.type as keyof CustomApiKeys;
@@ -134,6 +140,8 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
       reasoning: chatStore.reasoningEnabled,
       model,
       customApiKey,
+    }).catch(() => {
+      setShouldShowThinkingIndicator(false);
     });
 
     chatStore.resetState();
@@ -156,13 +164,6 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
     );
   }, []);
 
-  useChatStreamingResponse({
-    messages,
-    setMessages,
-    setForcedThinkingIndicator,
-    conversationUuid: conversationId,
-  });
-
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
@@ -174,16 +175,17 @@ export const ChatConversation = ({ conversationId }: ChatConversationProps) => {
         className="overflow-auto scroll-auto"
         onScroll={onScrollHander}
       >
-        <div
-          className={cn(
-            'mx-auto flex w-full max-w-3xl flex-col gap-2 space-y-12 px-4 pt-4 pb-10 break-words whitespace-pre-wrap text-white duration-300',
-            messages.length > 0 && 'animate-in fade-in-50 zoom-in-95'
-          )}
-        >
-          {messages.map((message) =>
-            message.content.length > 0 ? <ChatMessage key={message._id} {...message} /> : null
-          )}
-          {shouldShowThinkingIndicator && <ThinkingIndicator />}
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-2 space-y-12 px-4 pt-4 pb-10 break-words whitespace-pre-wrap text-white duration-300">
+          {messages?.map((message, index) => (
+            <ChatMessage
+              key={message.messageUuid}
+              {...message}
+              shouldAnimate={index === 0 && messages.length === 1}
+              onScrollToBottom={scrollToBottom}
+              onDismissThinkingIndicator={onDismissThinkingIndicator}
+            />
+          ))}
+          {shouldShowThinkingIndicator && messages.length > 0 && <ThinkingIndicator />}
         </div>
       </div>
       <ScrollToBottomPanel

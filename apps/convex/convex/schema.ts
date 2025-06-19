@@ -17,6 +17,7 @@ export default defineSchema({
 
   messages: defineTable({
     conversationId: v.id('conversations'), // Parent conversation
+    messageUuid: v.string(), // handled on the client
     role: v.union(v.literal('user'), v.literal('assistant'), v.literal('system')),
     content: v.string(), // Full message text (updated as tokens arrive)
     type: v.union(v.literal('text'), v.literal('image')), // message type to differentiate image gen

@@ -59,6 +59,7 @@ export default async function processLLMJob(data: LLMWorkerData) {
 
     messageId = await addMessageToConversation({
       conversationId,
+      messageUuid: uuidv4(),
       content: '',
       type: isImageGeneration ? 'image' : 'text',
       streamId,

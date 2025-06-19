@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useMutation } from 'convex/react';
-import { Pin, Trash2 } from 'lucide-react';
+import { Pin, PinOff, Trash2 } from 'lucide-react';
 import { motion, HTMLMotionProps } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 
@@ -31,7 +31,7 @@ export const ChatConversationItem = (conversation: Doc<'conversations'>) => {
   const pathname = usePathname();
   const sessionId = useSessionStore((state) => state.sessionId);
   const addToRecentChats = usePreferencesStore((state) => state.addToRecentChats);
-  const isSelected = pathname === `/conversations/${conversation.conversationUuid}`;
+  const isSelected = pathname === `/chat/${conversation.conversationUuid}`;
 
   const updateConversation = useMutation(api.conversations.updateConversation).withOptimisticUpdate(
     (localStore, { conversationId, ...updateParams }) => {
@@ -59,7 +59,7 @@ export const ChatConversationItem = (conversation: Doc<'conversations'>) => {
           className={`flex items-center justify-between rounded-sm p-2 text-sm ${
             isSelected ? 'bg-tertiary' : 'hover:bg-tertiary'
           } relative overflow-hidden`}
-          href={`/conversations/${conversation.conversationUuid}`}
+          href={`/chat/${conversation.conversationUuid}`}
           prefetch={true}
           onClick={() => addToRecentChats(conversation.conversationUuid)}
         >
@@ -73,10 +73,17 @@ export const ChatConversationItem = (conversation: Doc<'conversations'>) => {
               className="rounded-sm p-1 hover:opacity-70"
               onClick={(e) => {
                 e.preventDefault();
-                updateConversation({ conversationId: conversation._id, pinned: true });
+                updateConversation({
+                  conversationId: conversation._id,
+                  pinned: !conversation.pinned,
+                });
               }}
             >
-              <Pin size={14} className="text-gray-400" />
+              {conversation.pinned ? (
+                <PinOff size={14} className="text-gray-400" />
+              ) : (
+                <Pin size={14} className="text-gray-400" />
+              )}
             </button>
           </motion.div>
           <motion.div {...BUTTON_ANIMATION_PROPS}>

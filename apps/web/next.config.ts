@@ -8,6 +8,18 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react', 'lodash'],
   },
   compress: true,
+  async rewrites() {
+    return [
+      {
+        source: '/',
+        destination: '/chat',
+      },
+      {
+        source: '/chat/:path*',
+        destination: '/chat',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

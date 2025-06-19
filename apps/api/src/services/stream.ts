@@ -13,13 +13,6 @@ export interface Attachment {
   url: string;
 }
 
-interface ChatEvent {
-  id?: number;
-  type?: 'INIT' | 'DONE' | 'MESSAGE' | 'REASONING' | 'IMAGE';
-  text?: string;
-  imageUrl?: string;
-}
-
 interface StartLlmJobParams {
   conversationId: Id<'conversations'>;
   messages: Message[];
@@ -28,8 +21,6 @@ interface StartLlmJobParams {
   reasoning: boolean;
   customApiKey?: string;
 }
-
-const IMAGE_GENERATION_MODELS = ['gpt-image-1'];
 
 export async function startLLMJob({
   conversationId,

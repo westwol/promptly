@@ -31,6 +31,7 @@ export async function generateConversationTitle(
 
 export async function addMessageToConversation({
   conversationId,
+  messageUuid,
   streamId,
   type,
   status,
@@ -38,6 +39,7 @@ export async function addMessageToConversation({
   content = '',
 }: {
   conversationId: Id<'conversations'>;
+  messageUuid: string;
   role: string;
   status: string;
   type: string;
@@ -47,6 +49,7 @@ export async function addMessageToConversation({
   /* @ts-expect-error allowing string */
   return await client.mutation('conversations:addNewMessageToConversation', {
     conversationId,
+    messageUuid,
     resumableStreamId: streamId,
     role,
     type,

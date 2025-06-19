@@ -3,12 +3,13 @@ import { useMutation } from 'convex/react';
 
 import { api } from '@t3chat-convex/_generated/api';
 import { Doc } from '@t3chat-convex/_generated/dataModel';
+import { db } from '@t3chat/lib/db';
 
 export const useCreateConversation = (sessionId: string) => {
   const createInitialConversation = useMutation(
     api.conversations.createInitialConversation
   ).withOptimisticUpdate((localStore, args) => {
-    const { conversationId, content } = args;
+    const { conversationId, messageUuid, content } = args;
     const conversations = localStore.getQuery(api.conversations.get, { sessionId });
     if (!conversations) {
       return;
@@ -27,17 +28,17 @@ export const useCreateConversation = (sessionId: string) => {
       temporalConversation,
       ...conversations,
     ]);
-    localStore.setQuery(
-      api.conversations.getById,
-      { conversationUuid: conversationId },
-      {
-        conversation: temporalConversation,
-        messages: [
-          /* @ts-expect-error we will wait to reconciliate with the backend later  */
-          { _id: uuidv4(), role: 'user', type: 'text', status: 'complete', content },
-        ],
-      }
-    );
+    db.messages.add({
+      /* @ts-expect-error invalid uuid */
+      _id: uuidv4(),
+      messageUuid,
+      conversationId: temporalConversation._id,
+      role: 'user',
+      type: 'text',
+      status: 'complete',
+      content,
+      createdAt: currentDate,
+    });
   });
 
   return createInitialConversation;
