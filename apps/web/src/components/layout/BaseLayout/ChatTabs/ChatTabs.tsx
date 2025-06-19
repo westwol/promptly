@@ -38,7 +38,7 @@ export const ChatTabs = ({ isCollapsed }: ChatTabsProps) => {
     event.preventDefault();
     event.stopPropagation();
 
-    const isClosingActiveTab = pathname === `/conversations/${conversationUuid}`;
+    const isClosingActiveTab = pathname === `/chat/${conversationUuid}`;
 
     if (isClosingActiveTab) {
       const currentTabIndex = foundChats.findIndex(
@@ -50,15 +50,17 @@ export const ChatTabs = ({ isCollapsed }: ChatTabsProps) => {
       } else if (currentTabIndex > 0) {
         nextTab = foundChats[currentTabIndex - 1];
       }
-      router.replace(nextTab ? `/conversations/${nextTab.conversationUuid}` : '/');
+      router.replace(nextTab ? `/chat/${nextTab.conversationUuid}` : '/');
     }
 
     removeFromRecentChats(conversationUuid);
   };
 
   return (
-    <div className={cn('bg-secondary absolute left-0 z-[20]', isCollapsed && 'left-[100px]')}>
-      <div className="scroll-x-auto scrollbar-hide flex items-end gap-0.5 overflow-auto px-2 py-1">
+    <div
+      className={cn('bg-secondary absolute left-0 z-[20] w-full', isCollapsed && 'left-[100px]')}
+    >
+      <div className="scrollbar-hide flex w-full items-end gap-0.5 overflow-x-auto overflow-y-hidden px-2 py-1">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -82,7 +84,7 @@ export const ChatTabs = ({ isCollapsed }: ChatTabsProps) => {
 
         <AnimatePresence mode="popLayout">
           {foundChats.map((conv, index) => {
-            const isActive = pathname === `/conversations/${conv.conversationUuid}`;
+            const isActive = pathname === `/chat/${conv.conversationUuid}`;
 
             return (
               <motion.div
@@ -100,7 +102,7 @@ export const ChatTabs = ({ isCollapsed }: ChatTabsProps) => {
                 whileTap={{ scale: 0.98 }}
               >
                 <Link
-                  href={`/conversations/${conv.conversationUuid}`}
+                  href={`/chat/${conv.conversationUuid}`}
                   className={`group relative flex max-w-[200px] min-w-0 shrink-0 cursor-pointer items-center gap-2 rounded-t-lg px-3 py-2.5 text-sm text-white transition-all duration-200 ${
                     isActive ? 'bg-secondary text-white shadow-sm' : 'bg-primary hover:bg-tertiary'
                   }`}

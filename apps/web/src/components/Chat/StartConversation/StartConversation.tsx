@@ -1,7 +1,6 @@
 'use client';
 
 import { v4 as uuidv4 } from 'uuid';
-import { useRouter } from 'next/navigation';
 import { isEmpty } from 'lodash';
 
 import { useSessionStore } from '@t3chat/store/session';
@@ -18,13 +17,12 @@ export const StartConversation = () => {
   const sessionId = useSessionStore((state) => state.sessionId);
   const createInitialConversation = useCreateConversation(sessionId);
 
-  const router = useRouter();
-
   const onSendRequest = async () => {
     const chatStore = useChatStore.getState();
     const preferencesStore = usePreferencesStore.getState();
 
     const generatedConversationId = uuidv4();
+    const generatedMessageId = uuidv4();
     const content = chatStore.content;
     const attachments = chatStore.attachments as CompletedChatAttachment[];
 
@@ -33,10 +31,11 @@ export const StartConversation = () => {
     // Add the new conversation to recent chats
     preferencesStore.addToRecentChats(generatedConversationId);
 
-    router.push(`/conversations/${generatedConversationId}?new=true`);
+    window.history.pushState({}, '', `/chat/${generatedConversationId}?new=true`);
 
     const conversationId = await createInitialConversation({
       conversationId: generatedConversationId,
+      messageUuid: generatedMessageId,
       content,
       sessionId,
     });

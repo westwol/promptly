@@ -11,9 +11,8 @@ import {
 } from '@t3chat/components/ui/ResizablePanel';
 import { api } from '@t3chat-convex/_generated/api';
 import { ImperativePanelHandle } from 'react-resizable-panels';
-
 import { Sidebar } from './Sidebar';
-import { ChatTabs } from './ChatTabs/ChatTabs';
+import { ChatTabs } from './ChatTabs';
 
 export const BaseLayout = ({ children }: PropsWithChildren) => {
   const resizablePanel = useRef<ImperativePanelHandle>(null);

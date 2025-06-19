@@ -30,8 +30,6 @@ export const startChat = async ({
   const canModelReason = model.capabilities.includes('reasoning');
   const shouldIncludeAttachments = model.capabilities.includes('vision');
 
-  console.log({ customApiKey });
-
   const res = await fetch(`${API_ENDPOINT}/chat/start`, {
     method: 'POST',
     headers: {

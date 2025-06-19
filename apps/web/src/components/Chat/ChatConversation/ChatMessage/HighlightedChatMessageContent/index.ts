@@ -1,0 +1,1 @@
+export { HighlightedChatMessageContent } from './HighlightedChatMessageContent';

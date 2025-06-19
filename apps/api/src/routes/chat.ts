@@ -1,4 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Id } from '@convex/_generated/dataModel';
 import { Attachment, startLLMJob } from '../services/stream';
@@ -36,6 +37,7 @@ export async function startChatHandler(
     if (!limit.isAllowed && limit.isExceeded) {
       addMessageToConversation({
         conversationId,
+        messageUuid: uuidv4(),
         content: 'Rate limit excedded, please wait before trying again',
         type: 'text',
         role: 'assistant',

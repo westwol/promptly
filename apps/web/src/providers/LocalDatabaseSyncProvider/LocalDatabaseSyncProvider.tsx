@@ -17,15 +17,15 @@ export const LocalDatabaseSyncProvider = ({ children }: PropsWithChildren) => {
     }
 
     const watch = client.watchQuery(api.conversations.get, { sessionId });
-    const unsubscribe = watch.onUpdate(() => {
+
+    const unsubscribe = watch.onUpdate(async () => {
       try {
         const result = watch.localQueryResult();
         const conversations = result ?? [];
 
+        // Fallback to simple sync if reconciliation fails
         db.conversations.clear();
-        conversations.forEach((conversation) => {
-          db.conversations.add(conversation);
-        });
+        db.conversations.bulkAdd(conversations);
       } catch (error) {
         console.error('Error syncing conversations to local database:', error);
       }

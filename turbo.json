@@ -1,20 +1,32 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalEnv": [],
-  "globalDotEnv": [".env"],
-  "pipeline": {
+  "globalDependencies": [
+    ".env"
+  ],
+  "tasks": {
     "dev": {
       "cache": false,
       "persistent": true,
-      "dotEnv": [".env.dev"]
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env.dev"
+      ]
     },
     "start": {
       "cache": false,
       "persistent": true,
-      "dotEnv": [".env.dev"]
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env.dev"
+      ]
     },
     "build": {
-      "outputs": ["dist/**", ".next/**", ".next/cache/**"]
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        ".next/cache/**"
+      ]
     },
     "build:web": {
       "env": [
@@ -24,10 +36,15 @@
         "CLERK_SECRET_KEY",
         "UPLOADTHING_TOKEN"
       ],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**"
+      ]
     },
     "build:api": {
-      "outputs": ["dist/**"]
+      "outputs": [
+        "dist/**"
+      ]
     }
   }
 }

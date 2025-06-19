@@ -37,7 +37,7 @@ export default async function RootLayout({
             <SessionProvider>
               <LocalDatabaseSyncProvider>
                 <Toaster />
-                <BaseLayout>{children}</BaseLayout>
+                {children}
               </LocalDatabaseSyncProvider>
             </SessionProvider>
           </ConvexClientProvider>
