@@ -137,3 +137,12 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Safari and Chrome */
 }
+
+/* Override mobile button size constraints */
+@media (width <= 767px) {
+  button,
+  [role='button'] {
+    min-width: unset !important;
+    min-height: unset !important;
+  }
+}

@@ -1,9 +1,6 @@
 'use client';
 
-import { Preloaded } from 'convex/react';
 import Image from 'next/image';
-
-import { api } from '@t3chat-convex/_generated/api';
 
 import { ChatList } from './ChatList';
 import { NewChatButton } from './NewChatButton';

@@ -58,7 +58,10 @@ export const ChatTabs = ({ isCollapsed }: ChatTabsProps) => {
 
   return (
     <div
-      className={cn('bg-secondary absolute left-0 z-[20] w-full', isCollapsed && 'left-[100px]')}
+      className={cn(
+        'bg-secondary absolute left-0 z-[20] w-full',
+        isCollapsed && 'left-[40px] xl:left-[100px]'
+      )}
     >
       <div className="scrollbar-hide flex w-full items-end gap-0.5 overflow-x-auto overflow-y-hidden px-2 py-1">
         <motion.div
@@ -68,7 +71,7 @@ export const ChatTabs = ({ isCollapsed }: ChatTabsProps) => {
         >
           <Link
             href="/"
-            className={`group relative flex max-w-[120px] min-w-0 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-t-lg px-3 py-2.5 text-sm transition-all duration-200 ${
+            className={`group relative flex h-9 max-w-[120px] min-w-0 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-t-lg px-3 text-sm transition-all duration-200 ${
               pathname === '/'
                 ? 'bg-secondary text-white shadow-sm'
                 : 'bg-primary hover:bg-tertiary text-gray-400 hover:text-white'
@@ -103,16 +106,22 @@ export const ChatTabs = ({ isCollapsed }: ChatTabsProps) => {
               >
                 <Link
                   href={`/chat/${conv.conversationUuid}`}
-                  className={`group relative flex max-w-[200px] min-w-0 shrink-0 cursor-pointer items-center gap-2 rounded-t-lg px-3 py-2.5 text-sm text-white transition-all duration-200 ${
+                  className={`group relative flex h-9 max-w-[200px] min-w-0 shrink-0 cursor-pointer items-center justify-between gap-2 rounded-t-lg px-3 text-sm text-white transition-all duration-200 ${
                     isActive ? 'bg-secondary text-white shadow-sm' : 'bg-primary hover:bg-tertiary'
                   }`}
                 >
-                  <span className="truncate text-xs font-medium">
+                  <span className="flex-1 truncate text-xs font-medium">
                     {conv.title || 'New conversation'}
                   </span>
+                  <button
+                    onClick={(e) => onCloseTab(e, conv.conversationUuid)}
+                    className="flex-shrink-0 rounded-sm p-0.5 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-gray-600 sm:hidden"
+                  >
+                    <X size={12} className="text-gray-400 hover:text-white" />
+                  </button>
                   <motion.button
                     onClick={(e) => onCloseTab(e, conv.conversationUuid)}
-                    className="rounded-sm p-0.5 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-gray-600"
+                    className="hidden h-4 w-4 flex-shrink-0 rounded-sm p-0.5 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-gray-600 sm:block"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                   >

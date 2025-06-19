@@ -34,7 +34,7 @@ export const ChatRecommendations = () => {
                 );
               })}
             </ul>
-            <ul className="mt-10 grid grid-cols-2 gap-4">
+            <ul className="mt-10 grid grid-cols-2 gap-4 pb-20 xl:pb-0">
               {currentCategory?.recommendations.map((recommendation) => (
                 <li
                   key={`conversation-starter-${recommendation}`}
