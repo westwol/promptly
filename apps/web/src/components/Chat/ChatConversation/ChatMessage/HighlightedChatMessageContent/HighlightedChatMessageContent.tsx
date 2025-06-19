@@ -6,6 +6,7 @@ import { Prism as SyntaxHighlighter, SyntaxHighlighterProps } from 'react-syntax
 import { Copy, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import remarkGfm from 'remark-gfm';
 
 import { Tooltip } from '@t3chat/components/ui';
 
@@ -50,11 +51,54 @@ interface HighlightedChatMessageContentProps {
 export const HighlightedChatMessageContent = ({ content }: HighlightedChatMessageContentProps) => {
   return (
     <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
       components={{
-        ol: ({ children }) => <ol className="list-disc p-0">{children}</ol>,
-        ul: ({ children }) => <ul className="list-disc p-0 marker:text-gray-400">{children}</ul>,
-        li: ({ children }) => <li className="ml-6 text-gray-200">{children}</li>,
+        ol: ({ children }) => (
+          <ol className="ml-0 list-decimal first:mt-0 last:mb-0">{children}</ol>
+        ),
+        ul: ({ children }) => (
+          <ul className="mt-[-20px] ml-0 list-disc marker:text-gray-400">{children}</ul>
+        ),
+        li: ({ children }) => (
+          <li className="ml-5 text-gray-200">
+            <div className="flex flex-col gap-2">{children}</div>
+          </li>
+        ),
+        p: ({ children }) => <p className="my-2 first:mt-0 last:mb-0">{children}</p>,
         pre: ({ children }) => <div className="group">{children}</div>,
+        table({ children }) {
+          return (
+            <table className="my-4 w-full border-collapse text-left text-sm">{children}</table>
+          );
+        },
+        thead({ children }) {
+          return <thead className="bg-primary">{children}</thead>;
+        },
+        tbody({ children }) {
+          return <tbody>{children}</tbody>;
+        },
+        tr({ children }) {
+          return <tr>{children}</tr>;
+        },
+        th({ children }) {
+          return <th className="border-primary/50 border p-2 font-semibold">{children}</th>;
+        },
+        td({ children }) {
+          return <td className="border-primary/50 border p-2">{children}</td>;
+        },
+        a: ({ node, href, children, ...props }) => {
+          return (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:underline"
+              {...props}
+            >
+              {children}
+            </a>
+          );
+        },
         code({ className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || '');
           const lang = match ? match[1].toLowerCase() : '';
