@@ -57,8 +57,10 @@ export const ChatTabs = ({ isCollapsed }: ChatTabsProps) => {
   };
 
   return (
-    <div className={cn('bg-secondary absolute left-0 z-[20]', isCollapsed && 'left-[100px]')}>
-      <div className="scroll-x-auto scrollbar-hide flex items-end gap-0.5 overflow-auto px-2 py-1">
+    <div
+      className={cn('bg-secondary absolute left-0 z-[20] w-full', isCollapsed && 'left-[100px]')}
+    >
+      <div className="scrollbar-hide flex w-full items-end gap-0.5 overflow-x-auto overflow-y-hidden px-2 py-1">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
